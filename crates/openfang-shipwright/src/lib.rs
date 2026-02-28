@@ -5,5 +5,9 @@
 //! and cross-Hand intelligence via Collector, Researcher, and Predictor.
 
 pub mod config;
+pub mod github;
+pub mod memory;
 
 pub use config::ShipwrightConfig;
+pub use github::GitHubClient;
+pub use memory::ShipwrightMemory;
