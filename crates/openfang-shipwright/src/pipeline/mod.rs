@@ -10,6 +10,7 @@ pub use self_healing::{BuildLoop, BuildOutcome, ProgressState};
 pub use stages::{Gate, ModelChoice, PipelineState, Stage, StageConfig};
 pub use templates::PipelineTemplate;
 
+use crate::config::PipelineTemplateName;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -19,26 +20,34 @@ pub struct Pipeline {
     pub id: String,
     pub issue: Option<u64>,
     pub goal: String,
-    pub template: String,
+    pub template: PipelineTemplateName,
     pub stages: Vec<StageConfig>,
-    pub state: PipelineState,
+    pub(crate) state: PipelineState,
     pub artifacts_dir: PathBuf,
     pub created_at: String,
     pub updated_at: String,
 }
 
 impl Pipeline {
+    /// Get a reference to the pipeline's current state.
+    pub fn state(&self) -> &PipelineState {
+        &self.state
+    }
+
     /// Create a new pipeline from an issue.
     pub fn from_issue(issue_id: u64, goal: String, template: PipelineTemplate) -> Self {
         let id = uuid::Uuid::new_v4().to_string();
         let now = chrono::Utc::now().to_rfc3339();
         let artifacts_dir = PathBuf::from(format!("./.shipwright/pipelines/{}", id));
 
+        // Extract template name and convert to PipelineTemplateName
+        let template_name = Self::parse_template_name(&template.name);
+
         Self {
             id: id.clone(),
             issue: Some(issue_id),
             goal,
-            template: template.name,
+            template: template_name,
             stages: template.stages,
             state: PipelineState::Running {
                 current_stage: Stage::Intake,
@@ -56,11 +65,14 @@ impl Pipeline {
         let now = chrono::Utc::now().to_rfc3339();
         let artifacts_dir = PathBuf::from(format!("./.shipwright/pipelines/{}", id));
 
+        // Extract template name and convert to PipelineTemplateName
+        let template_name = Self::parse_template_name(&template.name);
+
         Self {
             id: id.clone(),
             issue: None,
             goal,
-            template: template.name,
+            template: template_name,
             stages: template.stages,
             state: PipelineState::Running {
                 current_stage: Stage::Intake,
@@ -69,6 +81,19 @@ impl Pipeline {
             artifacts_dir,
             created_at: now.clone(),
             updated_at: now,
+        }
+    }
+
+    /// Parse a template name string to PipelineTemplateName.
+    fn parse_template_name(name: &str) -> PipelineTemplateName {
+        match name.to_lowercase().as_str() {
+            "fast" => PipelineTemplateName::Fast,
+            "standard" => PipelineTemplateName::Standard,
+            "full" => PipelineTemplateName::Full,
+            "hotfix" => PipelineTemplateName::Hotfix,
+            "autonomous" => PipelineTemplateName::Autonomous,
+            "cost-aware" | "costawaree" => PipelineTemplateName::CostAware,
+            _ => PipelineTemplateName::Standard, // Default fallback
         }
     }
 
@@ -139,6 +164,8 @@ impl Pipeline {
     }
 
     /// Get progress percentage.
+    /// For Failed and Paused states, uses the at_stage field to calculate actual progress
+    /// instead of returning hardcoded values.
     pub fn progress_percent(&self) -> u8 {
         if self.is_complete() {
             return 100;
@@ -150,8 +177,18 @@ impl Pipeline {
                 let current_index = all_stages.iter().position(|s| s == current_stage).unwrap_or(0);
                 ((current_index * 100) / all_stages.len()) as u8
             }
-            PipelineState::Failed { .. } => 0,
-            PipelineState::Paused { .. } => 50,
+            PipelineState::Failed { at_stage, .. } => {
+                // Calculate progress based on the stage where failure occurred
+                let all_stages = Stage::all();
+                let stage_index = all_stages.iter().position(|s| s == at_stage).unwrap_or(0);
+                ((stage_index * 100) / all_stages.len()) as u8
+            }
+            PipelineState::Paused { at_stage, .. } => {
+                // Calculate progress based on the stage where paused
+                let all_stages = Stage::all();
+                let stage_index = all_stages.iter().position(|s| s == at_stage).unwrap_or(0);
+                ((stage_index * 100) / all_stages.len()) as u8
+            }
             PipelineState::Pending => 0,
             PipelineState::Completed { .. } => 100,
         }
@@ -407,5 +444,120 @@ mod tests {
             pipeline.state,
             PipelineState::Completed { .. }
         ));
+    }
+
+    #[test]
+    fn test_high003_template_stored_as_typed_enum() {
+        // HIGH-003: Pipeline should store template as PipelineTemplateName (typed enum),
+        // not String, to ensure type safety
+        let template = PipelineTemplate::fast();
+        let pipeline = Pipeline::from_issue(42, "Fix bug".to_string(), template);
+
+        // Template field should be PipelineTemplateName::Fast, not String "fast"
+        assert_eq!(pipeline.template, PipelineTemplateName::Fast);
+        assert_eq!(pipeline.issue, Some(42));
+    }
+
+    #[test]
+    fn test_high003_template_name_parsing() {
+        // HIGH-003: Template name parsing should correctly convert strings to enums
+        assert_eq!(
+            Pipeline::parse_template_name("fast"),
+            PipelineTemplateName::Fast
+        );
+        assert_eq!(
+            Pipeline::parse_template_name("standard"),
+            PipelineTemplateName::Standard
+        );
+        assert_eq!(
+            Pipeline::parse_template_name("full"),
+            PipelineTemplateName::Full
+        );
+        assert_eq!(
+            Pipeline::parse_template_name("hotfix"),
+            PipelineTemplateName::Hotfix
+        );
+        assert_eq!(
+            Pipeline::parse_template_name("autonomous"),
+            PipelineTemplateName::Autonomous
+        );
+        assert_eq!(
+            Pipeline::parse_template_name("cost-aware"),
+            PipelineTemplateName::CostAware
+        );
+        // Case-insensitive
+        assert_eq!(
+            Pipeline::parse_template_name("FAST"),
+            PipelineTemplateName::Fast
+        );
+    }
+
+    #[test]
+    fn test_med002_progress_percent_failed_at_stage() {
+        // MED-002: Progress percent for Failed state should use at_stage,
+        // not return hardcoded 0%
+        let template = PipelineTemplate::fast();
+        let mut pipeline = Pipeline::from_issue(1, "test".to_string(), template);
+
+        // Advance to Monitor stage (final stage)
+        while !matches!(pipeline.state, PipelineState::Completed { .. }) {
+            let _ = pipeline.advance_stage();
+        }
+
+        // Reset to Running at Monitor
+        pipeline.state = PipelineState::Running {
+            current_stage: Stage::Monitor,
+            iteration: 0,
+        };
+
+        // Fail at Monitor (last stage, ~92% progress)
+        pipeline.fail("Error at Monitor".to_string()).unwrap();
+
+        let progress = pipeline.progress_percent();
+        // Monitor is the 12th stage (index 11), so (11 * 100) / 12 = 91%
+        assert!(
+            progress >= 85 && progress <= 95,
+            "Failed at Monitor should show ~91% progress, got {}%",
+            progress
+        );
+        assert_ne!(progress, 0, "Failed state should not return hardcoded 0%");
+    }
+
+    #[test]
+    fn test_med002_progress_percent_paused_at_stage() {
+        // MED-002: Progress percent for Paused state should use at_stage,
+        // not return hardcoded 50%
+        let template = PipelineTemplate::fast();
+        let mut pipeline = Pipeline::from_issue(1, "test".to_string(), template);
+
+        // Advance to Intake (first stage, 0% progress)
+        pipeline.pause("Waiting for approval".to_string()).unwrap();
+
+        let progress = pipeline.progress_percent();
+        // Intake is the 1st stage (index 0), so (0 * 100) / 12 = 0%
+        assert_eq!(
+            progress, 0,
+            "Paused at Intake should show 0% progress, got {}%",
+            progress
+        );
+
+        // Now test paused at Build (4th stage, ~25% progress)
+        pipeline.state = PipelineState::Paused {
+            at_stage: Stage::Build,
+            iteration: 2,
+            reason: "Waiting".to_string(),
+        };
+
+        let progress = pipeline.progress_percent();
+        // Build is the 4th stage (index 3), so (3 * 100) / 12 = 25%
+        assert!(
+            progress >= 20 && progress <= 30,
+            "Paused at Build should show ~25% progress, got {}%",
+            progress
+        );
+        assert_ne!(
+            progress, 50,
+            "Paused state should not return hardcoded 50%"
+        );
     }
 }

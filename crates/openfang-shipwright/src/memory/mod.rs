@@ -7,6 +7,7 @@ pub mod patterns;
 pub use architecture::ArchitectureRule;
 pub use learning::{Outcome, ScoringWeights, ABTest, ABGroup};
 pub use patterns::FailurePattern;
+use crate::decision::signals::SignalType;
 
 /// Shipwright memory store.
 pub struct ShipwrightMemory {
@@ -98,7 +99,7 @@ impl ShipwrightMemory {
     }
 
     /// Get outcomes for a signal source.
-    pub fn get_outcomes_for_signal(&self, signal_source: &str) -> Vec<Outcome> {
+    pub fn get_outcomes_for_signal(&self, signal_source: SignalType) -> Vec<Outcome> {
         self.outcomes
             .iter()
             .filter(|o| o.signal_source == signal_source)
@@ -119,10 +120,11 @@ mod tests {
 
     #[test]
     fn test_memory_store_failure() {
+        use crate::pipeline::Stage;
         let mut memory = ShipwrightMemory::new();
-        let pattern = FailurePattern::new(
+        let pattern = FailurePattern::with_stage(
             "repo".to_string(),
-            "build".to_string(),
+            Stage::Build,
             "Error".to_string(),
             "undefined variable".to_string(),
             "cause".to_string(),
@@ -134,10 +136,11 @@ mod tests {
 
     #[test]
     fn test_search_similar_failures() {
+        use crate::pipeline::Stage;
         let mut memory = ShipwrightMemory::new();
-        let pattern = FailurePattern::new(
+        let pattern = FailurePattern::with_stage(
             "repo".to_string(),
-            "build".to_string(),
+            Stage::Build,
             "Error".to_string(),
             "undefined property".to_string(),
             "cause".to_string(),
@@ -151,10 +154,11 @@ mod tests {
 
     #[test]
     fn test_compose_context() {
+        use crate::pipeline::Stage;
         let mut memory = ShipwrightMemory::new();
-        let pattern = FailurePattern::new(
+        let pattern = FailurePattern::with_stage(
             "repo".to_string(),
-            "build".to_string(),
+            Stage::Build,
             "Error".to_string(),
             "undefined property".to_string(),
             "missing initialization".to_string(),
@@ -210,7 +214,7 @@ mod tests {
     #[test]
     fn test_record_outcome() {
         let mut memory = ShipwrightMemory::new();
-        let outcome = Outcome::new("cand-1".to_string(), 75.0, "security".to_string());
+        let outcome = Outcome::new("cand-1".to_string(), 75.0, SignalType::Security);
         memory.record_outcome(outcome);
         assert_eq!(memory.outcomes.len(), 1);
     }
@@ -218,12 +222,12 @@ mod tests {
     #[test]
     fn test_get_outcomes_for_signal() {
         let mut memory = ShipwrightMemory::new();
-        let outcome1 = Outcome::new("c1".to_string(), 75.0, "security".to_string());
-        let outcome2 = Outcome::new("c2".to_string(), 60.0, "dependency".to_string());
+        let outcome1 = Outcome::new("c1".to_string(), 75.0, SignalType::Security);
+        let outcome2 = Outcome::new("c2".to_string(), 60.0, SignalType::Dependency);
         memory.record_outcome(outcome1);
         memory.record_outcome(outcome2);
 
-        let security_outcomes = memory.get_outcomes_for_signal("security");
+        let security_outcomes = memory.get_outcomes_for_signal(SignalType::Security);
         assert_eq!(security_outcomes.len(), 1);
     }
 }

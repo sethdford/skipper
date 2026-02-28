@@ -31,7 +31,8 @@ impl PipelineComposer {
                 if intel.complexity_score > 70 {
                     stage.max_iterations = (stage.max_iterations as f64 * 1.5) as u32;
                 } else if intel.complexity_score < 30 {
-                    stage.max_iterations = stage.max_iterations.max(1);
+                    // Low complexity → reduce iterations (but keep minimum of 1)
+                    stage.max_iterations = stage.max_iterations.clamp(1, 2);
                 }
 
                 // Route models: complex stages use Opus for high complexity
@@ -176,5 +177,40 @@ mod tests {
             .unwrap_or(0);
 
         assert!(new_test_iterations > original_test_iterations);
+    }
+
+    #[test]
+    fn test_med008_low_complexity_reduces_iterations() {
+        // MED-008: Low complexity (< 30) should reduce iterations for optimization,
+        // not be a no-op like `max(1)` which doesn't change anything
+        let base = PipelineTemplate::standard();
+        let original_iterations: Vec<u32> = base.stages.iter().map(|s| s.max_iterations).collect();
+
+        let intel = IntelligenceInput {
+            complexity_score: 20,
+            has_risky_areas: false,
+            test_intensity_needed: false,
+            estimated_effort_hours: 1.0,
+        };
+
+        let composed = PipelineComposer::compose(base, Some(intel));
+        let new_iterations: Vec<u32> = composed.stages.iter().map(|s| s.max_iterations).collect();
+
+        // At least some stages should have reduced iterations
+        let has_reduction = original_iterations
+            .iter()
+            .zip(new_iterations.iter())
+            .any(|(orig, new)| new < orig);
+
+        assert!(
+            has_reduction,
+            "Low complexity (20) should reduce some iterations from {:?} to {:?}",
+            original_iterations, new_iterations
+        );
+
+        // Verify iterations never go below 1
+        for iterations in new_iterations {
+            assert!(iterations >= 1, "Iterations should never be < 1");
+        }
     }
 }

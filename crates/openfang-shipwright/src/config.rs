@@ -153,6 +153,23 @@ pub struct RepoConfig {
     pub auto_merge: bool,
 }
 
+impl RepoConfig {
+    /// Validate the repository configuration.
+    /// Returns Ok(()) if valid, Err(String) with error message if not.
+    pub fn validate(&self) -> Result<(), String> {
+        if self.owner.is_empty() {
+            return Err("Repository owner cannot be empty".to_string());
+        }
+        if self.repo.is_empty() {
+            return Err("Repository name cannot be empty".to_string());
+        }
+        if self.max_parallel == 0 {
+            return Err("max_parallel must be at least 1".to_string());
+        }
+        Ok(())
+    }
+}
+
 fn default_template() -> PipelineTemplateName {
     PipelineTemplateName::Standard
 }
@@ -219,5 +236,67 @@ mod tests {
         assert_eq!(config.fleet.max_workers, 4);
         assert_eq!(config.fleet.poll_interval_seconds, 60); // default
         assert!(!config.decision.enabled); // default
+    }
+
+    #[test]
+    fn test_med012_repo_config_validation_valid() {
+        // MED-012: RepoConfig should validate owner and repo are non-empty
+        let config = RepoConfig {
+            path: "/tmp/test".into(),
+            owner: "myorg".to_string(),
+            repo: "myrepo".to_string(),
+            template: PipelineTemplateName::Standard,
+            max_parallel: 2,
+            auto_merge: false,
+        };
+        assert!(config.validate().is_ok());
+    }
+
+    #[test]
+    fn test_med012_repo_config_validation_empty_owner() {
+        // MED-012: RepoConfig should reject empty owner
+        let config = RepoConfig {
+            path: "/tmp/test".into(),
+            owner: "".to_string(),
+            repo: "myrepo".to_string(),
+            template: PipelineTemplateName::Standard,
+            max_parallel: 2,
+            auto_merge: false,
+        };
+        let result = config.validate();
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("owner cannot be empty"));
+    }
+
+    #[test]
+    fn test_med012_repo_config_validation_empty_repo() {
+        // MED-012: RepoConfig should reject empty repo name
+        let config = RepoConfig {
+            path: "/tmp/test".into(),
+            owner: "myorg".to_string(),
+            repo: "".to_string(),
+            template: PipelineTemplateName::Standard,
+            max_parallel: 2,
+            auto_merge: false,
+        };
+        let result = config.validate();
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Repository name cannot be empty"));
+    }
+
+    #[test]
+    fn test_med012_repo_config_validation_zero_max_parallel() {
+        // MED-012: RepoConfig should reject max_parallel = 0
+        let config = RepoConfig {
+            path: "/tmp/test".into(),
+            owner: "myorg".to_string(),
+            repo: "myrepo".to_string(),
+            template: PipelineTemplateName::Standard,
+            max_parallel: 0,
+            auto_merge: false,
+        };
+        let result = config.validate();
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("max_parallel must be at least 1"));
     }
 }

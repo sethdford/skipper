@@ -47,14 +47,8 @@ pub struct CandidateResponse {
     pub tier: String,
 }
 
-/// DORA metrics (API response DTO)
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct DoraMetricsResponse {
-    pub lead_time_hours: f64,
-    pub deploy_frequency: f64,
-    pub change_failure_rate: f64,
-    pub mttr_hours: f64,
-}
+// DORA metrics: use canonical type from intelligence::dora
+use crate::intelligence::dora::DoraMetrics;
 
 /// Create the Shipwright API router
 pub fn router<S>() -> Router<S>
@@ -157,12 +151,7 @@ async fn list_candidates() -> impl IntoResponse {
 }
 
 async fn get_dora_metrics(Path(_repo): Path<String>) -> impl IntoResponse {
-    let metrics = DoraMetricsResponse {
-        lead_time_hours: 2.3,
-        deploy_frequency: 1.5,
-        change_failure_rate: 18.0,
-        mttr_hours: 0.5,
-    };
+    let metrics = DoraMetrics::new(2.3, 1.5, 0.18, 0.5);
     Json(ApiResponse {
         data: metrics,
         status: "ok".into(),
@@ -206,12 +195,7 @@ mod tests {
 
     #[test]
     fn test_dora_metrics() {
-        let metrics = DoraMetricsResponse {
-            lead_time_hours: 2.0,
-            deploy_frequency: 1.0,
-            change_failure_rate: 15.0,
-            mttr_hours: 1.0,
-        };
+        let metrics = DoraMetrics::new(2.0, 1.0, 0.15, 1.0);
         assert!(metrics.lead_time_hours > 0.0);
     }
 

@@ -119,9 +119,9 @@ impl Candidate {
         self
     }
 
-    /// Set risk score (0-100).
+    /// Set risk score (0-100), clamped to valid range.
     pub fn with_risk_score(mut self, score: u8) -> Self {
-        self.risk_score = score;
+        self.risk_score = score.clamp(0, 100);
         self
     }
 
@@ -387,6 +387,40 @@ mod tests {
         .with_confidence(-0.5);
 
         assert_eq!(candidate.confidence, 0.0);
+    }
+
+    #[test]
+    fn test_med003_risk_score_clamped_over_100() {
+        // MED-003: risk_score should clamp to 0-100 range
+        let candidate = Candidate::new(
+            SignalType::Security,
+            Category::SecurityPatch,
+            "test".to_string(),
+            "test".to_string(),
+            "test".to_string(),
+        )
+        .with_risk_score(255);
+
+        assert_eq!(
+            candidate.risk_score, 100,
+            "Risk score > 100 should be clamped to 100"
+        );
+    }
+
+    #[test]
+    fn test_med003_risk_score_clamped_under_0() {
+        // MED-003: risk_score should clamp to 0-100 range
+        // Note: u8 can't be negative, but we test the clamping logic is in place
+        let candidate = Candidate::new(
+            SignalType::Security,
+            Category::SecurityPatch,
+            "test".to_string(),
+            "test".to_string(),
+            "test".to_string(),
+        )
+        .with_risk_score(0);
+
+        assert_eq!(candidate.risk_score, 0, "Risk score 0 should be accepted");
     }
 
     #[test]

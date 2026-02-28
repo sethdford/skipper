@@ -43,13 +43,19 @@ impl ProgressState {
     }
 
     /// Calculate error reduction percentage.
+    /// Returns 100.0 only when both previous and current are 0.
+    /// Returns 0.0 when errors increase from 0 (regression from clean state).
+    /// Returns negative values when errors increase (diverging).
     pub fn error_reduction_percent(&self) -> Option<f64> {
         self.previous_error_count.map(|prev| {
             if prev == 0 {
-                100.0
+                if self.error_count == 0 {
+                    100.0 // Both zero — fully reduced (no errors)
+                } else {
+                    0.0 // Regression from clean state — no reduction
+                }
             } else {
-                let reduction = (prev as f64 - self.error_count as f64) / prev as f64 * 100.0;
-                reduction.max(0.0)
+                (prev as f64 - self.error_count as f64) / prev as f64 * 100.0
             }
         })
     }
@@ -125,9 +131,11 @@ impl BuildLoop {
     }
 
     /// Check if we should run full test suite this iteration.
+    /// Runs full test on iteration 1 (first iteration after initial), every N iterations,
+    /// and the final iteration. Avoids double-triggering on both iteration 0 and 1.
     pub fn should_run_full_test(&self) -> bool {
         self.progress.iteration == 1
-            || (self.progress.iteration % self.fast_test_interval) == 0
+            || (self.progress.iteration > 1 && (self.progress.iteration % self.fast_test_interval) == 0)
             || self.progress.iteration >= self.max_iterations - 1
     }
 }
@@ -231,16 +239,26 @@ mod tests {
     #[test]
     fn test_build_loop_should_run_full_test() {
         let mut loop_config = BuildLoop::new(10);
-        assert!(loop_config.should_run_full_test());
+        loop_config.fast_test_interval = 5;
 
+        // Iteration 0 should NOT run full test (initial state, no work done)
+        assert!(!loop_config.should_run_full_test());
+
+        // Iteration 1 should run full test (first iteration after initial)
         loop_config.progress.iteration = 1;
         assert!(loop_config.should_run_full_test());
 
+        // Iteration 2 should NOT run full test
+        loop_config.progress.iteration = 2;
+        assert!(!loop_config.should_run_full_test());
+
+        // Iteration 5 should run full test (5 % 5 == 0, and iteration > 1)
         loop_config.progress.iteration = 5;
         assert!(loop_config.should_run_full_test());
 
-        loop_config.progress.iteration = 2;
-        assert!(!loop_config.should_run_full_test());
+        // Iteration 9 should be final iteration, so should run full test
+        loop_config.progress.iteration = 9;
+        assert!(loop_config.should_run_full_test());
     }
 
     #[test]
@@ -277,5 +295,112 @@ mod tests {
         assert_eq!(progress.last_errors.len(), 10);
         // error_count must match, not be 11
         assert_eq!(progress.error_count, 10, "error_count should be 10 after trim, not 11");
+    }
+
+    #[test]
+    fn test_crit006_error_reduction_clean_to_errors() {
+        // CRIT-006: When previous=0 (clean state) and current > 0 (errors introduced),
+        // should return 0.0 (divergence), not 100.0 (false convergence)
+        let mut progress = ProgressState::new();
+        progress.previous_error_count = Some(0);
+        progress.record_error("error 1".to_string());
+
+        let reduction = progress.error_reduction_percent().unwrap();
+        assert_eq!(
+            reduction, 0.0,
+            "Regression from clean state should have 0% reduction, not 100%"
+        );
+    }
+
+    #[test]
+    fn test_crit006_error_reduction_clean_stays_clean() {
+        // CRIT-006: When previous=0 and current=0, should return 100.0 (full reduction)
+        let mut progress = ProgressState::new();
+        progress.previous_error_count = Some(0);
+
+        let reduction = progress.error_reduction_percent().unwrap();
+        assert_eq!(reduction, 100.0, "Clean state maintained should be 100% reduction");
+    }
+
+    #[test]
+    fn test_compound001_clean_to_errors_to_capped() {
+        // COMPOUND-001: Pipeline starts clean (0 errors) → gains errors → verify
+        // self-healing correctly detects DIVERGENCE, not convergence.
+        // This tests the interaction of CRIT-006 + CRIT-007.
+
+        let mut loop_config = BuildLoop::new(10);
+
+        // Initial state: clean (0 errors, no previous)
+        assert_eq!(loop_config.evaluate(), BuildOutcome::TestsPassing);
+
+        // Move to iteration 1 and record that it was clean
+        loop_config.next_iteration();
+        assert_eq!(loop_config.progress.previous_error_count, Some(0));
+
+        // Now introduce errors (simulating a regression)
+        for i in 0..5 {
+            loop_config.progress.record_error(format!("error {}", i));
+        }
+        assert_eq!(loop_config.progress.error_count, 5);
+
+        // CRITICAL: Should evaluate as Diverging (errors introduced from clean state)
+        let outcome = loop_config.evaluate();
+        assert_eq!(
+            outcome,
+            BuildOutcome::Diverging,
+            "Regression from clean state should be detected as Diverging, not Converging"
+        );
+
+        // Move to iteration 2
+        loop_config.next_iteration();
+        assert_eq!(loop_config.progress.iteration, 2);
+        assert_eq!(loop_config.progress.previous_error_count, Some(5));
+
+        // Now reduce errors (converging)
+        loop_config.progress.last_errors.clear();
+        for i in 0..2 {
+            loop_config.progress.record_error(format!("error {}", i));
+        }
+        assert_eq!(loop_config.progress.error_count, 2);
+
+        // Should evaluate as Converging (errors reduced from 5 to 2)
+        let outcome = loop_config.evaluate();
+        assert!(matches!(outcome, BuildOutcome::Converging { .. }));
+    }
+
+    #[test]
+    fn test_low001_should_run_full_test_no_double_trigger() {
+        // LOW-001: should_run_full_test should not trigger on both iteration 0 and 1.
+        // Iteration 0 is the initial state (no work done), iteration 1 is the first real iteration.
+        let mut loop_config = BuildLoop::new(10);
+        loop_config.fast_test_interval = 5;
+
+        // Iteration 0 (initial state) should NOT trigger full test
+        // (since 0 % 5 == 0 matches the modulo condition)
+        assert!(!loop_config.should_run_full_test(), "Iteration 0 should not run full test");
+
+        // Iteration 1 (first iteration) should trigger full test
+        loop_config.next_iteration();
+        assert_eq!(loop_config.progress.iteration, 1);
+        assert!(loop_config.should_run_full_test(), "Iteration 1 should run full test");
+
+        // Iteration 2 should NOT trigger (neither condition met)
+        loop_config.next_iteration();
+        assert_eq!(loop_config.progress.iteration, 2);
+        assert!(!loop_config.should_run_full_test(), "Iteration 2 should not run full test");
+
+        // Iteration 5 should trigger (modulo condition, but only when > 1)
+        loop_config.progress.iteration = 5;
+        assert!(
+            loop_config.should_run_full_test(),
+            "Iteration 5 should run full test (5 % 5 == 0)"
+        );
+
+        // Verify no double-trigger: iteration 0 % 5 == 0, but should still be false
+        loop_config.progress.iteration = 0;
+        assert!(
+            !loop_config.should_run_full_test(),
+            "Iteration 0 should not double-trigger on modulo"
+        );
     }
 }
