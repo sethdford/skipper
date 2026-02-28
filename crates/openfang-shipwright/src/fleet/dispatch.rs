@@ -123,8 +123,9 @@ impl Dispatcher {
     /// Release a worker claim.
     pub fn release(&mut self, job_id: &str) -> Result<(), String> {
         if let Some(claim) = self.active_claims.remove(job_id) {
-            let current = self.allocated_per_repo.get_mut(&claim.repo).unwrap_or(&mut 0);
-            *current = current.saturating_sub(1);
+            if let Some(current) = self.allocated_per_repo.get_mut(&claim.repo) {
+                *current = current.saturating_sub(1);
+            }
             Ok(())
         } else {
             Err(format!("Job {} not found", job_id))
