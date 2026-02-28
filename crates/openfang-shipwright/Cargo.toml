@@ -23,6 +23,10 @@ reqwest = { workspace = true, features = ["json"] }
 rusqlite = { workspace = true }
 dashmap = { workspace = true }
 async-trait = { workspace = true }
+clap = { workspace = true, features = ["derive"] }
+axum = { workspace = true, features = ["ws"] }
+tower = { workspace = true }
+tower-http = { workspace = true, features = ["cors", "trace"] }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["test-util", "macros"] }
