@@ -163,6 +163,50 @@ impl Pipeline {
         matches!(self.state, PipelineState::Failed { .. })
     }
 
+    /// Run the pipeline through all enabled stages.
+    ///
+    /// This async method executes the pipeline sequentially through each enabled stage
+    /// in the template. It advances through stages, tracks iteration count, and stops
+    /// on failure or completion.
+    ///
+    /// # Returns
+    /// - `Ok(())` if pipeline completes successfully
+    /// - `Err(msg)` if pipeline fails or encounters an error
+    pub async fn run(&mut self) -> Result<(), String> {
+        loop {
+            // Check if pipeline is already in terminal state
+            if self.is_complete() {
+                return Ok(());
+            }
+
+            if self.is_failed() {
+                return Err(format!(
+                    "Pipeline failed at stage: {:?}",
+                    match &self.state {
+                        PipelineState::Failed { at_stage, .. } => at_stage,
+                        _ => &Stage::Intake,
+                    }
+                ));
+            }
+
+            // Advance to next stage
+            if let Err(e) = self.advance_stage() {
+                // If we can't advance (reached end), mark as complete
+                if e.contains("no next stage") {
+                    let new_state = PipelineState::Completed { pr_url: None };
+                    self.state = new_state;
+                    self.updated_at = chrono::Utc::now().to_rfc3339();
+                    return Ok(());
+                } else {
+                    return Err(e);
+                }
+            }
+
+            // Yield to allow async operations
+            tokio::task::yield_now().await;
+        }
+    }
+
     /// Get progress percentage.
     /// For Failed and Paused states, uses the at_stage field to calculate actual progress
     /// instead of returning hardcoded values.
