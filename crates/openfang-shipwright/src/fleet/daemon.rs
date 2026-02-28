@@ -15,15 +15,15 @@ pub enum TriagePriority {
 
 /// Mock GitHub issue for testing.
 #[derive(Debug, Clone)]
-pub struct Issue {
+pub struct QueueItem {
     pub id: String,
     pub title: String,
     pub labels: Vec<String>,
     pub priority: TriagePriority,
 }
 
-impl Issue {
-    /// Create a new issue.
+impl QueueItem {
+    /// Create a new queue item.
     pub fn new(id: String, title: String) -> Self {
         Self {
             id,
@@ -55,9 +55,9 @@ pub struct PollResult {
     pub skipped: u32,
 }
 
-/// Async poll cycle: dispatch issues respecting limits.
+/// Async poll cycle: dispatch queue items respecting limits.
 pub async fn poll_cycle(
-    issues: Vec<Issue>,
+    issues: Vec<QueueItem>,
     max_parallel: u32,
     available_workers: u32,
     claimed_ids: &[String],
@@ -101,30 +101,30 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_issue_new() {
-        let issue = Issue::new("123".to_string(), "Fix bug".to_string());
-        assert_eq!(issue.id, "123");
-        assert_eq!(issue.title, "Fix bug");
-        assert_eq!(issue.priority, TriagePriority::Unlabeled);
+    fn test_queue_item_new() {
+        let item = QueueItem::new("123".to_string(), "Fix bug".to_string());
+        assert_eq!(item.id, "123");
+        assert_eq!(item.title, "Fix bug");
+        assert_eq!(item.priority, TriagePriority::Unlabeled);
     }
 
     #[test]
-    fn test_issue_with_label() {
-        let issue = Issue::new("123".to_string(), "Fix bug".to_string())
+    fn test_queue_item_with_label() {
+        let item = QueueItem::new("123".to_string(), "Fix bug".to_string())
             .with_label("p0".to_string());
-        assert_eq!(issue.priority, TriagePriority::P0);
-        assert!(issue.labels.contains(&"p0".to_string()));
+        assert_eq!(item.priority, TriagePriority::P0);
+        assert!(item.labels.contains(&"p0".to_string()));
     }
 
     #[tokio::test]
     async fn test_poll_cycle_basic() {
-        let issues = vec![
-            Issue::new("1".to_string(), "Issue 1".to_string()).with_label("p0".to_string()),
-            Issue::new("2".to_string(), "Issue 2".to_string()).with_label("p1".to_string()),
-            Issue::new("3".to_string(), "Issue 3".to_string()),
+        let items = vec![
+            QueueItem::new("1".to_string(), "Issue 1".to_string()).with_label("p0".to_string()),
+            QueueItem::new("2".to_string(), "Issue 2".to_string()).with_label("p1".to_string()),
+            QueueItem::new("3".to_string(), "Issue 3".to_string()),
         ];
 
-        let result = poll_cycle(issues, 2, 2, &[]).await;
+        let result = poll_cycle(items, 2, 2, &[]).await;
         assert_eq!(result.dispatched.len(), 2);
         assert_eq!(result.queued_remaining, 1);
         // P0 and P1 should be dispatched first
@@ -134,51 +134,51 @@ mod tests {
 
     #[tokio::test]
     async fn test_poll_cycle_respects_max_parallel() {
-        let issues = vec![
-            Issue::new("1".to_string(), "Issue 1".to_string()),
-            Issue::new("2".to_string(), "Issue 2".to_string()),
-            Issue::new("3".to_string(), "Issue 3".to_string()),
+        let items = vec![
+            QueueItem::new("1".to_string(), "Issue 1".to_string()),
+            QueueItem::new("2".to_string(), "Issue 2".to_string()),
+            QueueItem::new("3".to_string(), "Issue 3".to_string()),
         ];
 
-        let result = poll_cycle(issues, 2, 5, &[]).await;
+        let result = poll_cycle(items, 2, 5, &[]).await;
         assert_eq!(result.dispatched.len(), 2);
         assert_eq!(result.queued_remaining, 1);
     }
 
     #[tokio::test]
     async fn test_poll_cycle_skips_claimed() {
-        let issues = vec![
-            Issue::new("1".to_string(), "Issue 1".to_string()),
-            Issue::new("2".to_string(), "Issue 2".to_string()),
+        let items = vec![
+            QueueItem::new("1".to_string(), "Issue 1".to_string()),
+            QueueItem::new("2".to_string(), "Issue 2".to_string()),
         ];
 
         let claimed = vec!["1".to_string()];
-        let result = poll_cycle(issues, 2, 5, &claimed).await;
+        let result = poll_cycle(items, 2, 5, &claimed).await;
         assert_eq!(result.dispatched.len(), 1);
         assert!(result.dispatched.contains(&"2".to_string()));
     }
 
     #[tokio::test]
     async fn test_poll_cycle_respects_worker_capacity() {
-        let issues = vec![
-            Issue::new("1".to_string(), "Issue 1".to_string()),
-            Issue::new("2".to_string(), "Issue 2".to_string()),
-            Issue::new("3".to_string(), "Issue 3".to_string()),
+        let items = vec![
+            QueueItem::new("1".to_string(), "Issue 1".to_string()),
+            QueueItem::new("2".to_string(), "Issue 2".to_string()),
+            QueueItem::new("3".to_string(), "Issue 3".to_string()),
         ];
 
-        let result = poll_cycle(issues, 10, 1, &[]).await;
+        let result = poll_cycle(items, 10, 1, &[]).await;
         assert_eq!(result.dispatched.len(), 1);
     }
 
     #[tokio::test]
     async fn test_poll_cycle_skips_proposed() {
-        let issues = vec![
-            Issue::new("1".to_string(), "Issue 1".to_string())
+        let items = vec![
+            QueueItem::new("1".to_string(), "Issue 1".to_string())
                 .with_label("shipwright:proposed".to_string()),
-            Issue::new("2".to_string(), "Issue 2".to_string()),
+            QueueItem::new("2".to_string(), "Issue 2".to_string()),
         ];
 
-        let result = poll_cycle(issues, 2, 5, &[]).await;
+        let result = poll_cycle(items, 2, 5, &[]).await;
         assert_eq!(result.dispatched.len(), 1);
         assert!(result.dispatched.contains(&"2".to_string()));
         assert_eq!(result.skipped, 1);

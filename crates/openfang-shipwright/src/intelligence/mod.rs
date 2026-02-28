@@ -14,8 +14,9 @@ pub mod prediction;
 pub use dora::{classify_dora_level, DoraLevel, DoraMetrics};
 pub use optimization::{suggest_config_change, adaptive_cycles, OptimizationSuggestion};
 pub use prediction::{
-    detect_anomaly, predict_risk, recommend_model, ModelChoice, RiskPrediction,
+    detect_anomaly, predict_risk, recommend_model, RiskPrediction,
 };
+pub use crate::pipeline::ModelChoice;
 
 /// Intelligence engine coordinator.
 pub struct IntelligenceEngine {

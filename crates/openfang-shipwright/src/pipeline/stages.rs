@@ -64,6 +64,20 @@ pub enum ModelChoice {
     Opus,
 }
 
+impl std::fmt::Display for ModelChoice {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                ModelChoice::Haiku => "haiku",
+                ModelChoice::Sonnet => "sonnet",
+                ModelChoice::Opus => "opus",
+            }
+        )
+    }
+}
+
 /// Configuration for a single stage.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StageConfig {
@@ -98,6 +112,7 @@ pub enum PipelineState {
     },
     Paused {
         at_stage: Stage,
+        iteration: u32,
         reason: String,
     },
     Completed {
@@ -111,7 +126,13 @@ pub enum PipelineState {
 }
 
 impl PipelineState {
-    /// Transition to the next stage.
+    /// Transition to the next stage using global stage ordering.
+    /// WARNING: This uses Stage::all() which includes all 12 stages.
+    /// For template-aware advancement, use advance_with_template() instead.
+    #[deprecated(
+        since = "0.2.2",
+        note = "Use advance_with_stages() instead to respect template stages"
+    )]
     pub fn advance(&self) -> Result<PipelineState, String> {
         match self {
             PipelineState::Running {
@@ -121,6 +142,32 @@ impl PipelineState {
                 if let Some(next) = current_stage.next() {
                     Ok(PipelineState::Running {
                         current_stage: next,
+                        iteration: 0,
+                    })
+                } else {
+                    Ok(PipelineState::Completed { pr_url: None })
+                }
+            }
+            _ => Err("Cannot advance from this state".to_string()),
+        }
+    }
+
+    /// Transition to the next stage with a list of enabled stages.
+    /// This respects template-specific stage ordering.
+    pub fn advance_with_stages(&self, enabled_stages: &[Stage]) -> Result<PipelineState, String> {
+        match self {
+            PipelineState::Running {
+                current_stage,
+                ..
+            } => {
+                let index = enabled_stages
+                    .iter()
+                    .position(|s| s == current_stage)
+                    .ok_or_else(|| format!("Current stage {:?} not in template", current_stage))?;
+
+                if let Some(next_stage) = enabled_stages.get(index + 1) {
+                    Ok(PipelineState::Running {
+                        current_stage: *next_stage,
                         iteration: 0,
                     })
                 } else {
@@ -169,20 +216,28 @@ impl PipelineState {
     /// Pause the pipeline at the current stage.
     pub fn pause(&self, reason: String) -> Result<PipelineState, String> {
         match self {
-            PipelineState::Running { current_stage, .. } => Ok(PipelineState::Paused {
+            PipelineState::Running {
+                current_stage,
+                iteration,
+            } => Ok(PipelineState::Paused {
                 at_stage: *current_stage,
+                iteration: *iteration,
                 reason,
             }),
             _ => Err("Cannot pause from this state".to_string()),
         }
     }
 
-    /// Resume from a paused state.
+    /// Resume from a paused state, preserving iteration count.
     pub fn resume(&self) -> Result<PipelineState, String> {
         match self {
-            PipelineState::Paused { at_stage, .. } => Ok(PipelineState::Running {
+            PipelineState::Paused {
+                at_stage,
+                iteration,
+                ..
+            } => Ok(PipelineState::Running {
                 current_stage: *at_stage,
-                iteration: 0,
+                iteration: *iteration,
             }),
             _ => Err("Cannot resume from this state".to_string()),
         }
@@ -292,8 +347,13 @@ mod tests {
         };
         let paused = state.pause("Waiting for approval".to_string()).unwrap();
         match paused {
-            PipelineState::Paused { at_stage, reason } => {
+            PipelineState::Paused {
+                at_stage,
+                iteration,
+                reason,
+            } => {
                 assert_eq!(at_stage, Stage::Review);
+                assert_eq!(iteration, 1);
                 assert_eq!(reason, "Waiting for approval");
             }
             _ => panic!("Expected Paused state"),
@@ -304,6 +364,7 @@ mod tests {
     fn test_pipeline_state_resume() {
         let state = PipelineState::Paused {
             at_stage: Stage::Review,
+            iteration: 0,
             reason: "Waiting for approval".to_string(),
         };
         let running = state.resume().unwrap();
@@ -320,8 +381,142 @@ mod tests {
     }
 
     #[test]
+    fn test_pipeline_state_pause_preserves_iteration() {
+        // H9: Paused state should preserve iteration count
+        let state = PipelineState::Running {
+            current_stage: Stage::Build,
+            iteration: 5,
+        };
+        let paused = state.pause("Waiting for approval".to_string()).unwrap();
+        match paused {
+            PipelineState::Paused {
+                at_stage,
+                iteration,
+                reason,
+            } => {
+                assert_eq!(at_stage, Stage::Build);
+                assert_eq!(iteration, 5); // Must preserve iteration
+                assert_eq!(reason, "Waiting for approval");
+            }
+            _ => panic!("Expected Paused state"),
+        }
+    }
+
+    #[test]
+    fn test_pipeline_state_resume_restores_iteration() {
+        // H9: Resume must restore the iteration count that was preserved during pause
+        let state = PipelineState::Paused {
+            at_stage: Stage::Build,
+            iteration: 5,
+            reason: "Waiting for approval".to_string(),
+        };
+        let running = state.resume().unwrap();
+        match running {
+            PipelineState::Running {
+                current_stage,
+                iteration,
+            } => {
+                assert_eq!(current_stage, Stage::Build);
+                assert_eq!(iteration, 5); // Must be restored from paused state
+            }
+            _ => panic!("Expected Running state"),
+        }
+    }
+
+    #[test]
     fn test_invalid_state_transition() {
         let state = PipelineState::Completed { pr_url: None };
         assert!(state.advance().is_err());
+    }
+
+    #[test]
+    fn test_advance_with_stages_fast_template() {
+        // Fast template: Intake -> Build -> Test -> Pr
+        let fast_stages = vec![Stage::Intake, Stage::Build, Stage::Test, Stage::Pr];
+
+        let state = PipelineState::Running {
+            current_stage: Stage::Intake,
+            iteration: 0,
+        };
+        let next = state.advance_with_stages(&fast_stages).unwrap();
+        match next {
+            PipelineState::Running {
+                current_stage,
+                iteration,
+            } => {
+                assert_eq!(current_stage, Stage::Build);
+                assert_eq!(iteration, 0);
+            }
+            _ => panic!("Expected Running state"),
+        }
+    }
+
+    #[test]
+    fn test_advance_with_stages_respects_template() {
+        // Fast template only has 4 stages, not all 12
+        let fast_stages = vec![Stage::Intake, Stage::Build, Stage::Test, Stage::Pr];
+
+        // In global ordering, Build -> Test -> Review, but fast template skips Review
+        let state = PipelineState::Running {
+            current_stage: Stage::Build,
+            iteration: 1,
+        };
+        let next = state.advance_with_stages(&fast_stages).unwrap();
+        match next {
+            PipelineState::Running {
+                current_stage,
+                iteration,
+            } => {
+                // Should advance to Test, not Review or Plan
+                assert_eq!(current_stage, Stage::Test);
+                assert_eq!(iteration, 0);
+            }
+            _ => panic!("Expected Running state"),
+        }
+    }
+
+    #[test]
+    fn test_advance_with_stages_reaches_end() {
+        let fast_stages = vec![Stage::Intake, Stage::Build, Stage::Test, Stage::Pr];
+
+        let state = PipelineState::Running {
+            current_stage: Stage::Pr,
+            iteration: 0,
+        };
+        let next = state.advance_with_stages(&fast_stages).unwrap();
+        assert!(matches!(next, PipelineState::Completed { .. }));
+    }
+
+    #[test]
+    fn test_advance_with_stages_invalid_stage() {
+        let fast_stages = vec![Stage::Intake, Stage::Build, Stage::Test, Stage::Pr];
+
+        // Current stage not in template
+        let state = PipelineState::Running {
+            current_stage: Stage::Plan,
+            iteration: 0,
+        };
+        assert!(state.advance_with_stages(&fast_stages).is_err());
+    }
+
+    #[test]
+    fn test_advance_with_stages_full_template() {
+        let full_stages = Stage::all();
+
+        let state = PipelineState::Running {
+            current_stage: Stage::Review,
+            iteration: 0,
+        };
+        let next = state.advance_with_stages(&full_stages).unwrap();
+        match next {
+            PipelineState::Running {
+                current_stage,
+                iteration,
+            } => {
+                assert_eq!(current_stage, Stage::CompoundQuality);
+                assert_eq!(iteration, 0);
+            }
+            _ => panic!("Expected Running state"),
+        }
     }
 }

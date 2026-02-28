@@ -82,9 +82,15 @@ impl Pipeline {
         }
     }
 
-    /// Advance to the next stage.
+    /// Advance to the next stage, respecting template-enabled stages.
     pub fn advance_stage(&mut self) -> Result<(), String> {
-        let new_state = self.state.advance()?;
+        let enabled_stages: Vec<Stage> = self
+            .stages
+            .iter()
+            .filter(|sc| sc.enabled)
+            .map(|sc| sc.stage)
+            .collect();
+        let new_state = self.state.advance_with_stages(&enabled_stages)?;
         self.state = new_state;
         self.updated_at = chrono::Utc::now().to_rfc3339();
         Ok(())
@@ -239,6 +245,38 @@ mod tests {
     }
 
     #[test]
+    fn test_pipeline_pause_and_resume_preserves_iteration() {
+        let template = PipelineTemplate::fast();
+        let mut pipeline = Pipeline::from_issue(1, "test".to_string(), template);
+
+        // Advance to iteration 3
+        pipeline.next_iteration().unwrap();
+        pipeline.next_iteration().unwrap();
+        pipeline.next_iteration().unwrap();
+
+        match &pipeline.state {
+            PipelineState::Running { iteration, .. } => {
+                assert_eq!(*iteration, 3);
+            }
+            _ => panic!("Expected Running state"),
+        }
+
+        // Pause the pipeline
+        pipeline.pause("Waiting for approval".to_string()).unwrap();
+
+        // Resume the pipeline
+        pipeline.resume().unwrap();
+
+        // Iteration count must be preserved (H9 fix)
+        match &pipeline.state {
+            PipelineState::Running { iteration, .. } => {
+                assert_eq!(*iteration, 3, "Iteration count should be preserved across pause/resume");
+            }
+            _ => panic!("Expected Running state"),
+        }
+    }
+
+    #[test]
     fn test_pipeline_progress_percent() {
         let template = PipelineTemplate::fast();
         let mut pipeline = Pipeline::from_issue(1, "test".to_string(), template);
@@ -247,5 +285,127 @@ mod tests {
         // After advancing, should be > 0%
         let _ = pipeline.advance_stage();
         assert!(pipeline.progress_percent() > 0);
+    }
+
+    #[test]
+    fn test_pipeline_fast_template_only_visits_four_stages() {
+        let template = PipelineTemplate::fast();
+        let mut pipeline = Pipeline::from_issue(1, "test".to_string(), template);
+
+        // Fast template should only have 4 stages: Intake, Build, Test, Pr
+        assert_eq!(pipeline.stages.len(), 4);
+        assert_eq!(pipeline.stages[0].stage, Stage::Intake);
+        assert_eq!(pipeline.stages[1].stage, Stage::Build);
+        assert_eq!(pipeline.stages[2].stage, Stage::Test);
+        assert_eq!(pipeline.stages[3].stage, Stage::Pr);
+
+        // Advance through all stages and verify they stay within template
+        let mut current_stage = Stage::Intake;
+        for i in 0..4 {
+            match &pipeline.state {
+                PipelineState::Running { current_stage: c, .. } => {
+                    assert_eq!(*c, current_stage);
+                }
+                _ => panic!("Expected Running state at stage {}", i),
+            }
+
+            if i < 3 {
+                assert!(pipeline.advance_stage().is_ok());
+                // Get next expected stage
+                current_stage = match current_stage {
+                    Stage::Intake => Stage::Build,
+                    Stage::Build => Stage::Test,
+                    Stage::Test => Stage::Pr,
+                    _ => panic!("Unexpected stage"),
+                };
+            } else {
+                // Last stage should complete when advanced
+                assert!(pipeline.advance_stage().is_ok());
+                assert!(matches!(
+                    pipeline.state,
+                    PipelineState::Completed { .. }
+                ));
+            }
+        }
+    }
+
+    #[test]
+    fn test_pipeline_standard_template_visits_correct_stages() {
+        let template = PipelineTemplate::standard();
+        let pipeline = Pipeline::from_issue(1, "test".to_string(), template);
+
+        // Standard template has 7 stages
+        assert_eq!(pipeline.stages.len(), 7);
+
+        // Verify stages are in correct order
+        let expected = vec![
+            Stage::Intake,
+            Stage::Plan,
+            Stage::Design,
+            Stage::Build,
+            Stage::Test,
+            Stage::Review,
+            Stage::Pr,
+        ];
+
+        for (i, expected_stage) in expected.iter().enumerate() {
+            assert_eq!(
+                pipeline.stages[i].stage, *expected_stage,
+                "Stage at index {} mismatch",
+                i
+            );
+        }
+    }
+
+    #[test]
+    fn test_pipeline_fast_does_not_visit_plan_design_review() {
+        let template = PipelineTemplate::fast();
+        let mut pipeline = Pipeline::from_issue(1, "test".to_string(), template);
+
+        // Start at Intake
+        assert!(matches!(
+            pipeline.state,
+            PipelineState::Running {
+                current_stage: Stage::Intake,
+                ..
+            }
+        ));
+
+        // Advance to Build (skipping Plan and Design that are in standard template)
+        pipeline.advance_stage().unwrap();
+        assert!(matches!(
+            pipeline.state,
+            PipelineState::Running {
+                current_stage: Stage::Build,
+                ..
+            }
+        ));
+
+        // Advance to Test (skipping Design, Review, etc.)
+        pipeline.advance_stage().unwrap();
+        assert!(matches!(
+            pipeline.state,
+            PipelineState::Running {
+                current_stage: Stage::Test,
+                ..
+            }
+        ));
+
+        // Advance to Pr (skipping Review)
+        pipeline.advance_stage().unwrap();
+        assert!(matches!(
+            pipeline.state,
+            PipelineState::Running {
+                current_stage: Stage::Pr,
+                ..
+            }
+        ));
+
+        // Final advance completes the pipeline
+        pipeline.advance_stage().unwrap();
+        assert!(matches!(
+            pipeline.state,
+            PipelineState::Completed { .. }
+        ));
     }
 }

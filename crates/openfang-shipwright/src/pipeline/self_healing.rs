@@ -35,10 +35,11 @@ impl ProgressState {
     /// Record an error.
     pub fn record_error(&mut self, error: String) {
         self.last_errors.push(error);
-        self.error_count = self.last_errors.len() as u32;
         if self.last_errors.len() > 10 {
             self.last_errors.remove(0);
         }
+        // Update error_count AFTER trimming to keep it in sync with last_errors (M17 fix)
+        self.error_count = self.last_errors.len() as u32;
     }
 
     /// Calculate error reduction percentage.
@@ -240,5 +241,41 @@ mod tests {
 
         loop_config.progress.iteration = 2;
         assert!(!loop_config.should_run_full_test());
+    }
+
+    #[test]
+    fn test_progress_state_error_count_vec_sync() {
+        // M17: error_count must stay in sync with last_errors.len()
+        let mut progress = ProgressState::new();
+
+        for i in 0..15 {
+            progress.record_error(format!("error {}", i));
+            // error_count must always match last_errors.len()
+            assert_eq!(
+                progress.error_count, progress.last_errors.len() as u32,
+                "After recording error {}, error_count ({}) doesn't match last_errors.len() ({})",
+                i, progress.error_count, progress.last_errors.len()
+            );
+        }
+
+        // After 15 errors, should have trimmed to max 10
+        assert_eq!(progress.last_errors.len(), 10);
+        assert_eq!(progress.error_count, 10);
+    }
+
+    #[test]
+    fn test_progress_state_error_count_after_trim() {
+        // M17: When errors exceed 10, error_count must be updated after trimming
+        let mut progress = ProgressState::new();
+
+        // Record 11 errors to trigger trim
+        for i in 0..11 {
+            progress.record_error(format!("error {}", i));
+        }
+
+        // Should have exactly 10 errors after trim
+        assert_eq!(progress.last_errors.len(), 10);
+        // error_count must match, not be 11
+        assert_eq!(progress.error_count, 10, "error_count should be 10 after trim, not 11");
     }
 }

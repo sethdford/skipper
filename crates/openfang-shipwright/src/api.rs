@@ -37,9 +37,9 @@ pub struct FleetStatusResponse {
     pub allocated_workers: u32,
 }
 
-/// Decision candidate
+/// Decision candidate (API response DTO)
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Candidate {
+pub struct CandidateResponse {
     pub id: String,
     pub signal: String,
     pub title: String,
@@ -47,9 +47,9 @@ pub struct Candidate {
     pub tier: String,
 }
 
-/// DORA metrics
+/// DORA metrics (API response DTO)
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct DoraMetrics {
+pub struct DoraMetricsResponse {
     pub lead_time_hours: f64,
     pub deploy_frequency: f64,
     pub change_failure_rate: f64,
@@ -135,14 +135,14 @@ async fn run_decision() -> impl IntoResponse {
 
 async fn list_candidates() -> impl IntoResponse {
     let candidates = vec![
-        Candidate {
+        CandidateResponse {
             id: "c1".into(),
             signal: "security".into(),
             title: "Update vulnerable dependency".into(),
             score: 85,
             tier: "auto".into(),
         },
-        Candidate {
+        CandidateResponse {
             id: "c2".into(),
             signal: "coverage".into(),
             title: "Improve test coverage".into(),
@@ -157,7 +157,7 @@ async fn list_candidates() -> impl IntoResponse {
 }
 
 async fn get_dora_metrics(Path(_repo): Path<String>) -> impl IntoResponse {
-    let metrics = DoraMetrics {
+    let metrics = DoraMetricsResponse {
         lead_time_hours: 2.3,
         deploy_frequency: 1.5,
         change_failure_rate: 18.0,
@@ -206,7 +206,7 @@ mod tests {
 
     #[test]
     fn test_dora_metrics() {
-        let metrics = DoraMetrics {
+        let metrics = DoraMetricsResponse {
             lead_time_hours: 2.0,
             deploy_frequency: 1.0,
             change_failure_rate: 15.0,
@@ -217,7 +217,7 @@ mod tests {
 
     #[test]
     fn test_candidate_structure() {
-        let cand = Candidate {
+        let cand = CandidateResponse {
             id: "c1".into(),
             signal: "security".into(),
             title: "Test".into(),

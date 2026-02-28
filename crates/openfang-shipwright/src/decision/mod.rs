@@ -13,7 +13,8 @@ pub mod scoring;
 pub mod signals;
 
 pub use autonomy::{AutonomyTier, DecisionLimits, DecisionState};
-pub use scoring::{score_candidate, ScoringWeights};
+pub use scoring::score_candidate;
+pub use crate::memory::learning::ScoringWeights;
 pub use signals::{
     Candidate, Category, RepoContext, SignalCollector, SignalType, HandSignalCollector,
     SecurityCollector, DependencyCollector, CoverageCollector, DeadCodeCollector,
