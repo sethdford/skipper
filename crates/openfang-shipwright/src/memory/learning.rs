@@ -1,5 +1,6 @@
 //! Outcome learning and weight adjustment for decision engine.
 
+use crate::decision::signals::SignalType;
 use serde::{Deserialize, Serialize};
 
 /// An outcome from a decision that was made.
@@ -11,7 +12,8 @@ pub struct Outcome {
     pub actual_success: bool,
     pub duration_minutes: u32,
     pub cost_usd: f64,
-    pub signal_source: String,
+    /// The source signal type for this outcome (typed for safety).
+    pub signal_source: SignalType,
     pub created_at: String,
 }
 
@@ -20,7 +22,7 @@ impl Outcome {
     pub fn new(
         candidate_id: String,
         predicted_score: f64,
-        signal_source: String,
+        signal_source: SignalType,
     ) -> Self {
         Self {
             id: uuid::Uuid::new_v4().to_string(),
@@ -169,7 +171,7 @@ mod tests {
         let outcome = Outcome::new(
             "cand-1".to_string(),
             75.0,
-            "security".to_string(),
+            SignalType::Security,
         );
         assert_eq!(outcome.candidate_id, "cand-1");
         assert_eq!(outcome.predicted_score, 75.0);
@@ -181,7 +183,7 @@ mod tests {
         let outcome = Outcome::new(
             "cand-1".to_string(),
             75.0,
-            "security".to_string(),
+            SignalType::Security,
         )
         .mark_successful();
         assert!(outcome.actual_success);
@@ -192,7 +194,7 @@ mod tests {
         let outcome = Outcome::new(
             "cand-1".to_string(),
             75.0,
-            "security".to_string(),
+            SignalType::Security,
         )
         .with_metrics(30, 5.5);
         assert_eq!(outcome.duration_minutes, 30);
@@ -209,8 +211,8 @@ mod tests {
     #[test]
     fn test_ab_test_success_rate() {
         let mut test = ABTest::new("test-1".to_string());
-        let outcome1 = Outcome::new("c1".to_string(), 50.0, "test".to_string()).mark_successful();
-        let outcome2 = Outcome::new("c2".to_string(), 50.0, "test".to_string());
+        let outcome1 = Outcome::new("c1".to_string(), 50.0, SignalType::Failure).mark_successful();
+        let outcome2 = Outcome::new("c2".to_string(), 50.0, SignalType::Failure);
         test.record_outcome(ABGroup::Control, outcome1);
         test.record_outcome(ABGroup::Control, outcome2);
 
@@ -249,7 +251,7 @@ mod tests {
 
         // Create 12 successful outcomes
         for i in 0..12 {
-            let outcome = Outcome::new(format!("c{}", i), 75.0, "test".to_string())
+            let outcome = Outcome::new(format!("c{}", i), 75.0, SignalType::Architecture)
                 .mark_successful();
             outcomes.push(outcome);
         }
@@ -264,7 +266,7 @@ mod tests {
         let outcome = Outcome::new(
             "cand-1".to_string(),
             75.0,
-            "security".to_string(),
+            SignalType::Security,
         );
         let json = serde_json::to_string(&outcome).unwrap();
         assert!(json.contains("\"candidate_id\":\"cand-1\""));

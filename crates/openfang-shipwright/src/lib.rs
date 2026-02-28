@@ -4,6 +4,7 @@
 //! Integrates with OpenFang kernel for scheduling, RBAC, metering,
 //! and cross-Hand intelligence via Collector, Researcher, and Predictor.
 
+pub mod api;
 pub mod config;
 pub mod decision;
 pub mod github;

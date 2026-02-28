@@ -20,23 +20,27 @@ pub enum Stage {
     Monitor,
 }
 
+/// All stages in order (static array to avoid allocations).
+const ALL_STAGES: &[Stage] = &[
+    Stage::Intake,
+    Stage::Plan,
+    Stage::Design,
+    Stage::Build,
+    Stage::Test,
+    Stage::Review,
+    Stage::CompoundQuality,
+    Stage::Pr,
+    Stage::Merge,
+    Stage::Deploy,
+    Stage::Validate,
+    Stage::Monitor,
+];
+
 impl Stage {
     /// Get all stages in order.
-    pub fn all() -> Vec<Stage> {
-        vec![
-            Stage::Intake,
-            Stage::Plan,
-            Stage::Design,
-            Stage::Build,
-            Stage::Test,
-            Stage::Review,
-            Stage::CompoundQuality,
-            Stage::Pr,
-            Stage::Merge,
-            Stage::Deploy,
-            Stage::Validate,
-            Stage::Monitor,
-        ]
+    /// Returns a static slice instead of allocating a new Vec each time.
+    pub fn all() -> &'static [Stage] {
+        ALL_STAGES
     }
 
     /// Get the next stage after this one.
@@ -254,6 +258,19 @@ mod tests {
         assert_eq!(stages.len(), 12);
         assert_eq!(stages[0], Stage::Intake);
         assert_eq!(stages[11], Stage::Monitor);
+    }
+
+    #[test]
+    fn test_low002_stage_all_returns_static_slice() {
+        // LOW-002: Stage::all() should return &'static [Stage] to avoid allocations
+        let stages1 = Stage::all();
+        let stages2 = Stage::all();
+
+        // Both should point to the same memory location (static slice)
+        assert_eq!(stages1.as_ptr(), stages2.as_ptr(), "Stage::all() should return the same static slice");
+
+        // Verify it's a slice, not a Vec
+        assert_eq!(stages1.len(), 12);
     }
 
     #[test]

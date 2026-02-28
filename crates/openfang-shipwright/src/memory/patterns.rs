@@ -1,5 +1,6 @@
 //! Failure pattern storage and semantic search.
 
+use crate::pipeline::Stage;
 use serde::{Deserialize, Serialize};
 
 /// A failure pattern learned from a previous run.
@@ -7,7 +8,9 @@ use serde::{Deserialize, Serialize};
 pub struct FailurePattern {
     pub id: String,
     pub repo: String,
-    pub stage: String,
+    /// The stage where failure occurred (typed as Option<Stage> for type safety).
+    #[serde(default)]
+    pub stage: Option<Stage>,
     pub error_class: String,
     pub error_signature: String,
     pub root_cause: String,
@@ -19,10 +22,10 @@ pub struct FailurePattern {
 }
 
 impl FailurePattern {
-    /// Create a new failure pattern.
+    /// Create a new failure pattern with an Option<Stage>.
     pub fn new(
         repo: String,
-        stage: String,
+        stage: Option<Stage>,
         error_class: String,
         error_signature: String,
         root_cause: String,
@@ -41,6 +44,18 @@ impl FailurePattern {
             embedding: vec![],
             created_at: chrono::Utc::now().to_rfc3339(),
         }
+    }
+
+    /// Create a new failure pattern with a specific Stage.
+    pub fn with_stage(
+        repo: String,
+        stage: Stage,
+        error_class: String,
+        error_signature: String,
+        root_cause: String,
+        fix_applied: String,
+    ) -> Self {
+        Self::new(repo, Some(stage), error_class, error_signature, root_cause, fix_applied)
     }
 
     /// Mark the pattern as successful.
@@ -62,25 +77,25 @@ mod tests {
 
     #[test]
     fn test_failure_pattern_creation() {
-        let pattern = FailurePattern::new(
+        let pattern = FailurePattern::with_stage(
             "myrepo".to_string(),
-            "build".to_string(),
+            Stage::Build,
             "CompilationError".to_string(),
             "unused variable 'x'".to_string(),
             "Removed variable x".to_string(),
             "let x = 1; -> let _x = 1;".to_string(),
         );
         assert_eq!(pattern.repo, "myrepo");
-        assert_eq!(pattern.stage, "build");
+        assert_eq!(pattern.stage, Some(Stage::Build));
         assert!(!pattern.success);
         assert_eq!(pattern.fix_commit, None);
     }
 
     #[test]
     fn test_failure_pattern_mark_successful() {
-        let pattern = FailurePattern::new(
+        let pattern = FailurePattern::with_stage(
             "myrepo".to_string(),
-            "build".to_string(),
+            Stage::Build,
             "CompilationError".to_string(),
             "unused variable 'x'".to_string(),
             "Removed variable x".to_string(),
@@ -92,9 +107,9 @@ mod tests {
 
     #[test]
     fn test_failure_pattern_with_commit() {
-        let pattern = FailurePattern::new(
+        let pattern = FailurePattern::with_stage(
             "myrepo".to_string(),
-            "build".to_string(),
+            Stage::Build,
             "CompilationError".to_string(),
             "unused variable 'x'".to_string(),
             "Removed variable x".to_string(),
@@ -106,9 +121,9 @@ mod tests {
 
     #[test]
     fn test_failure_pattern_serialize() {
-        let pattern = FailurePattern::new(
+        let pattern = FailurePattern::with_stage(
             "myrepo".to_string(),
-            "build".to_string(),
+            Stage::Build,
             "CompilationError".to_string(),
             "unused variable 'x'".to_string(),
             "Removed variable x".to_string(),
@@ -121,17 +136,17 @@ mod tests {
 
     #[test]
     fn test_failure_pattern_unique_id() {
-        let pattern1 = FailurePattern::new(
+        let pattern1 = FailurePattern::with_stage(
             "myrepo".to_string(),
-            "build".to_string(),
+            Stage::Build,
             "CompilationError".to_string(),
             "unused variable 'x'".to_string(),
             "Removed variable x".to_string(),
             "let x = 1; -> let _x = 1;".to_string(),
         );
-        let pattern2 = FailurePattern::new(
+        let pattern2 = FailurePattern::with_stage(
             "myrepo".to_string(),
-            "build".to_string(),
+            Stage::Build,
             "CompilationError".to_string(),
             "unused variable 'x'".to_string(),
             "Removed variable x".to_string(),
