@@ -4139,7 +4139,9 @@ name = "openfang-shipwright"
 version = "0.2.2"
 dependencies = [
  "async-trait",
+ "axum",
  "chrono",
+ "clap",
  "dashmap",
  "openfang-memory",
  "openfang-runtime",
@@ -4152,6 +4154,8 @@ dependencies = [
  "thiserror 2.0.18",
  "tokio",
  "toml 0.8.2",
+ "tower",
+ "tower-http",
  "tracing",
  "uuid",
 ]
