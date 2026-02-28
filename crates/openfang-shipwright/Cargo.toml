@@ -1,0 +1,29 @@
+[package]
+name = "openfang-shipwright"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Software Engineering Hand — autonomous delivery pipelines"
+
+[dependencies]
+openfang-types = { path = "../openfang-types" }
+openfang-memory = { path = "../openfang-memory" }
+openfang-runtime = { path = "../openfang-runtime" }
+
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+toml = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+chrono = { workspace = true, features = ["serde"] }
+uuid = { workspace = true, features = ["v4"] }
+tracing = { workspace = true }
+reqwest = { workspace = true, features = ["json"] }
+rusqlite = { workspace = true }
+dashmap = { workspace = true }
+async-trait = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util", "macros"] }
+tempfile = { workspace = true }
