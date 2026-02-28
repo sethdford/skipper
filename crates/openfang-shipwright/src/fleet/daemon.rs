@@ -3,15 +3,14 @@
 //! Polls GitHub for labeled issues, triages by priority, dispatches to fleet
 //! respecting worker limits, and tracks status.
 
-use std::collections::HashMap;
-
 /// Issue priority for triage.
+/// Higher numeric values = higher priority (for reverse sorting)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum TriagePriority {
-    P0,
-    P1,
-    P2,
     Unlabeled,
+    P2,
+    P1,
+    P0,
 }
 
 /// Mock GitHub issue for testing.
@@ -49,21 +48,11 @@ impl Issue {
 }
 
 /// Poll cycle result.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct PollResult {
     pub dispatched: Vec<String>,
     pub queued_remaining: u32,
     pub skipped: u32,
-}
-
-impl Default for PollResult {
-    fn default() -> Self {
-        Self {
-            dispatched: vec![],
-            queued_remaining: 0,
-            skipped: 0,
-        }
-    }
 }
 
 /// Async poll cycle: dispatch issues respecting limits.

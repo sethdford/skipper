@@ -30,7 +30,6 @@ impl Patrol {
     /// Run all patrol checks on a repo.
     pub async fn run(repo: &str) -> Vec<PatrolResult> {
         let _repo = repo;
-        let mut results = Vec::new();
 
         // Mock implementation: would call real scanners
         // - npm audit for Node
@@ -38,7 +37,7 @@ impl Patrol {
         // - coverage reports
         // - GitHub deployment history for DORA
 
-        results
+        Vec::new()
     }
 
     /// Check for security vulnerabilities.

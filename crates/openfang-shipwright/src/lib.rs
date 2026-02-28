@@ -10,6 +10,7 @@ pub mod github;
 pub mod intelligence;
 pub mod memory;
 pub mod pipeline;
+pub mod fleet;
 
 pub use config::ShipwrightConfig;
 pub use decision::DecisionEngine;
