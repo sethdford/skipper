@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct FailurePattern {
     pub id: String,
     pub repo: String,
-    /// The stage where failure occurred (typed as Option<Stage> for type safety).
+    /// The stage where failure occurred (typed as `Option<Stage>` for type safety).
     #[serde(default)]
     pub stage: Option<Stage>,
     pub error_class: String,
@@ -22,7 +22,7 @@ pub struct FailurePattern {
 }
 
 impl FailurePattern {
-    /// Create a new failure pattern with an Option<Stage>.
+    /// Create a new failure pattern with an `Option<Stage>`.
     pub fn new(
         repo: String,
         stage: Option<Stage>,
