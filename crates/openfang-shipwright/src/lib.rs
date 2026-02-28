@@ -7,7 +7,9 @@
 pub mod config;
 pub mod github;
 pub mod memory;
+pub mod pipeline;
 
 pub use config::ShipwrightConfig;
 pub use github::GitHubClient;
 pub use memory::ShipwrightMemory;
+pub use pipeline::Pipeline;
