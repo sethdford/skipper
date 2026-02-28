@@ -6,6 +6,7 @@
 
 pub mod api;
 pub mod config;
+pub mod dashboard;
 pub mod decision;
 pub mod github;
 pub mod hand;
