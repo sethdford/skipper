@@ -1,6 +1,6 @@
 //! Integration tests for Shipwright
 
-use openfang_shipwright::pipeline::{Pipeline, PipelineTemplate};
+use openfang_shipwright::pipeline::{Pipeline, PipelineTemplate, Stage};
 use openfang_shipwright::decision::{Candidate, SignalType, Category, score_candidate, ScoringWeights};
 use openfang_shipwright::memory::{ShipwrightMemory, FailurePattern};
 use openfang_shipwright::fleet::Dispatcher;
@@ -49,9 +49,9 @@ fn test_memory_store_and_search() {
     let mut memory = ShipwrightMemory::new();
     let repo = "my-repo".to_string();
 
-    let pattern = FailurePattern::new(
+    let pattern = FailurePattern::with_stage(
         repo.clone(),
-        "test".to_string(),
+        Stage::Test,
         "TimeoutError".to_string(),
         "test exceeded 30s".to_string(),
         "Slow database query".to_string(),
