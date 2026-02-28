@@ -1,5 +1,6 @@
 //! Risk prediction and anomaly detection.
 
+use crate::pipeline::ModelChoice;
 use serde::{Deserialize, Serialize};
 
 /// Risk prediction for a change.
@@ -31,28 +32,6 @@ impl RiskPrediction {
             score: score.clamp(0, 100),
             factors: vec![],
         }
-    }
-}
-
-/// Model recommendation based on risk.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum ModelChoice {
-    Haiku,
-    Sonnet,
-    Opus,
-}
-
-impl std::fmt::Display for ModelChoice {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                ModelChoice::Haiku => "haiku",
-                ModelChoice::Sonnet => "sonnet",
-                ModelChoice::Opus => "opus",
-            }
-        )
     }
 }
 

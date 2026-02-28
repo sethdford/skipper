@@ -40,23 +40,42 @@ impl WorkerPool {
         self.total_workers.saturating_sub(allocated)
     }
 
+    /// Validate the pool configuration.
+    pub fn validate(&self) -> Result<(), String> {
+        if self.worker_mem_gb == 0 {
+            return Err("worker_mem_gb must be greater than 0".to_string());
+        }
+        if self.min_workers > self.max_workers {
+            return Err(format!(
+                "min_workers ({}) must be <= max_workers ({})",
+                self.min_workers, self.max_workers
+            ));
+        }
+        Ok(())
+    }
+
     /// Suggest scaled worker count based on system metrics.
     pub fn suggest_scaled_workers(
         &self,
         cpu_cores: u32,
         available_mem_gb: u32,
         remaining_budget_usd: f64,
-    ) -> u32 {
+    ) -> Result<u32, String> {
+        // Validate config before calculations
+        self.validate()?;
+
         if !self.auto_scale {
-            return self.total_workers;
+            return Ok(self.total_workers);
         }
 
         let cpu_based = (cpu_cores as f64 * 0.75) as u32;
+        // Safe division: validated that worker_mem_gb > 0
         let mem_based = available_mem_gb / self.worker_mem_gb;
         let budget_based = ((remaining_budget_usd / self.cost_per_job_usd).floor() as u32).max(1);
 
         let suggested = cpu_based.min(mem_based).min(budget_based);
-        suggested.clamp(self.min_workers, self.max_workers)
+        // Safe clamp: validated that min_workers <= max_workers
+        Ok(suggested.clamp(self.min_workers, self.max_workers))
     }
 }
 
@@ -181,7 +200,7 @@ mod tests {
     #[test]
     fn test_suggest_scaled_workers_disabled() {
         let pool = WorkerPool::default();
-        let suggested = pool.suggest_scaled_workers(8, 32, 100.0);
+        let suggested = pool.suggest_scaled_workers(8, 32, 100.0).unwrap();
         assert_eq!(suggested, pool.total_workers);
     }
 
@@ -189,7 +208,7 @@ mod tests {
     fn test_suggest_scaled_workers_cpu_limited() {
         let mut pool = WorkerPool::default();
         pool.auto_scale = true;
-        let suggested = pool.suggest_scaled_workers(8, 32, 100.0);
+        let suggested = pool.suggest_scaled_workers(8, 32, 100.0).unwrap();
         assert_eq!(suggested, 6);
     }
 
@@ -198,7 +217,7 @@ mod tests {
         let mut pool = WorkerPool::default();
         pool.auto_scale = true;
         pool.worker_mem_gb = 4;
-        let suggested = pool.suggest_scaled_workers(8, 8, 100.0);
+        let suggested = pool.suggest_scaled_workers(8, 8, 100.0).unwrap();
         assert_eq!(suggested, 2);
     }
 
@@ -207,8 +226,46 @@ mod tests {
         let mut pool = WorkerPool::default();
         pool.auto_scale = true;
         pool.cost_per_job_usd = 5.0;
-        let suggested = pool.suggest_scaled_workers(8, 32, 10.0);
+        let suggested = pool.suggest_scaled_workers(8, 32, 10.0).unwrap();
         assert_eq!(suggested, 2);
+    }
+
+    #[test]
+    fn test_worker_pool_validation_success() {
+        let pool = WorkerPool::default();
+        assert!(pool.validate().is_ok());
+    }
+
+    #[test]
+    fn test_worker_pool_validation_zero_mem_gb() {
+        let mut pool = WorkerPool::default();
+        pool.worker_mem_gb = 0;
+        assert!(pool.validate().is_err());
+    }
+
+    #[test]
+    fn test_worker_pool_validation_min_greater_than_max() {
+        let mut pool = WorkerPool::default();
+        pool.min_workers = 10;
+        pool.max_workers = 5;
+        assert!(pool.validate().is_err());
+    }
+
+    #[test]
+    fn test_suggest_scaled_workers_rejects_zero_mem_gb() {
+        let mut pool = WorkerPool::default();
+        pool.auto_scale = true;
+        pool.worker_mem_gb = 0;
+        assert!(pool.suggest_scaled_workers(8, 32, 100.0).is_err());
+    }
+
+    #[test]
+    fn test_suggest_scaled_workers_rejects_invalid_min_max() {
+        let mut pool = WorkerPool::default();
+        pool.auto_scale = true;
+        pool.min_workers = 10;
+        pool.max_workers = 5;
+        assert!(pool.suggest_scaled_workers(8, 32, 100.0).is_err());
     }
 
     #[test]

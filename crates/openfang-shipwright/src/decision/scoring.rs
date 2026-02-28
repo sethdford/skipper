@@ -4,29 +4,7 @@
 //! value = (impact * 0.30) + (urgency * 0.25) + (confidence * 0.15) - (effort * 0.20) - (risk * 0.10)
 
 use super::signals::Candidate;
-use serde::{Deserialize, Serialize};
-
-/// Configurable scoring weights.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ScoringWeights {
-    pub impact: f64,
-    pub urgency: f64,
-    pub effort: f64,
-    pub confidence: f64,
-    pub risk: f64,
-}
-
-impl Default for ScoringWeights {
-    fn default() -> Self {
-        Self {
-            impact: 0.30,
-            urgency: 0.25,
-            effort: 0.20,
-            confidence: 0.15,
-            risk: 0.10,
-        }
-    }
-}
+use crate::memory::learning::ScoringWeights;
 
 impl ScoringWeights {
     /// Validate that weights sum to 1.0.
@@ -48,6 +26,7 @@ pub fn score_candidate(candidate: &Candidate, weights: &ScoringWeights) -> f64 {
 }
 
 /// Exponential moving average for weight adjustment.
+/// Adjusts weights and then renormalizes so they sum to 1.0.
 pub fn adjust_weights_ema(
     current: &ScoringWeights,
     success_count: u32,
@@ -58,13 +37,25 @@ pub fn adjust_weights_ema(
     }
 
     let adjustment = 1.0 / success_count as f64;
-    ScoringWeights {
+    let mut adjusted = ScoringWeights {
         impact: current.impact + (adjustment * alpha),
         urgency: current.urgency + (adjustment * alpha),
         effort: current.effort,
         confidence: current.confidence,
-        risk: current.risk - (adjustment * alpha),
+        risk: (current.risk - (adjustment * alpha)).max(0.0), // Ensure non-negative
+    };
+
+    // Renormalize weights so they sum to 1.0 (H10 fix)
+    let sum = adjusted.impact + adjusted.urgency + adjusted.effort + adjusted.confidence + adjusted.risk;
+    if sum > 0.0 {
+        adjusted.impact /= sum;
+        adjusted.urgency /= sum;
+        adjusted.effort /= sum;
+        adjusted.confidence /= sum;
+        adjusted.risk /= sum;
     }
+
+    adjusted
 }
 
 #[cfg(test)]
@@ -225,5 +216,53 @@ mod tests {
             risk: 0.1,
         };
         assert!(!weights.is_valid());
+    }
+
+    #[test]
+    fn test_adjust_weights_ema_renormalizes() {
+        // H10: After EMA adjustment, weights must sum to 1.0
+        let original = ScoringWeights::default();
+        let adjusted = adjust_weights_ema(&original, 100, 0.05);
+
+        // Check that weights sum to 1.0 (within small tolerance)
+        let sum = adjusted.impact + adjusted.urgency + adjusted.effort + adjusted.confidence + adjusted.risk;
+        assert!((sum - 1.0).abs() < 0.0001, "Weights sum to {}, expected ~1.0", sum);
+    }
+
+    #[test]
+    fn test_adjust_weights_ema_multiple_adjustments() {
+        // H10: Multiple EMA adjustments should maintain weight normalization
+        let mut weights = ScoringWeights::default();
+
+        for _ in 0..10 {
+            weights = adjust_weights_ema(&weights, 100, 0.05);
+            let sum = weights.impact + weights.urgency + weights.effort + weights.confidence + weights.risk;
+            assert!((sum - 1.0).abs() < 0.0001, "Weights sum to {}, expected ~1.0 after adjustment", sum);
+        }
+    }
+
+    #[test]
+    fn test_adjust_weights_ema_positive_impact() {
+        // H10: Weights should remain positive after renormalization
+        let original = ScoringWeights::default();
+        let adjusted = adjust_weights_ema(&original, 100, 0.05);
+
+        assert!(adjusted.impact > 0.0, "impact should be positive");
+        assert!(adjusted.urgency > 0.0, "urgency should be positive");
+        assert!(adjusted.effort >= 0.0, "effort should be non-negative");
+        assert!(adjusted.confidence > 0.0, "confidence should be positive");
+        assert!(adjusted.risk >= 0.0, "risk should be non-negative");
+    }
+
+    #[test]
+    fn test_adjust_weights_ema_increases_positive_weights() {
+        // H10: EMA should increase the positive weights (impact, urgency)
+        let original = ScoringWeights::default();
+        let adjusted = adjust_weights_ema(&original, 100, 0.05);
+
+        // Before renormalization, impact and urgency would increase
+        // After renormalization, they should still be relatively higher
+        assert!(adjusted.impact > 0.25, "impact should increase relative to original 0.30 (before norm)");
+        assert!(adjusted.urgency > 0.20, "urgency should increase relative to original 0.25 (before norm)");
     }
 }

@@ -20,3 +20,10 @@ pub use hand::HandDefinition;
 pub use intelligence::IntelligenceEngine;
 pub use memory::ShipwrightMemory;
 pub use pipeline::Pipeline;
+
+// Canonical type exports (H4: consolidate duplicates)
+pub use memory::learning::ScoringWeights;
+pub use pipeline::ModelChoice;
+pub use decision::signals::Candidate;
+pub use intelligence::dora::DoraMetrics;
+pub use github::Issue;
