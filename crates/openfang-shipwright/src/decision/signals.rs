@@ -185,13 +185,73 @@ pub trait SignalCollector: Send + Sync {
 /// Security vulnerability collector.
 pub struct SecurityCollector;
 
+impl SecurityCollector {
+    /// Parse npm audit JSON output into candidates.
+    ///
+    /// Expects format: `{ "vulnerabilities": { "package-name": { "fixAvailable": bool, "severity": "high"|"critical", ... } } }`
+    pub fn parse_npm_audit(output: &str) -> Result<Vec<Candidate>, String> {
+        let audit_json: serde_json::Value =
+            serde_json::from_str(output).map_err(|e| format!("Failed to parse npm audit: {}", e))?;
+
+        let mut candidates = vec![];
+
+        if let Some(vuln_obj) = audit_json.get("vulnerabilities").and_then(|v| v.as_object()) {
+            for (package_name, details) in vuln_obj.iter() {
+                let severity = details
+                    .get("severity")
+                    .and_then(|s| s.as_str())
+                    .unwrap_or("medium");
+
+                let is_fixable = details
+                    .get("fixAvailable")
+                    .and_then(|f| f.as_bool())
+                    .unwrap_or(false);
+
+                let (risk_score, urgency, impact) = match severity {
+                    "critical" => (95, 1.0, 1.0),
+                    "high" => (80, 0.9, 0.8),
+                    "moderate" => (50, 0.5, 0.5),
+                    "low" => (20, 0.2, 0.3),
+                    _ => (40, 0.4, 0.4),
+                };
+
+                candidates.push(
+                    Candidate::new(
+                        SignalType::Security,
+                        Category::SecurityPatch,
+                        format!("Update vulnerable dependency: {}", package_name),
+                        format!(
+                            "Security {} vulnerability found in {} ({})",
+                            severity, package_name,
+                            if is_fixable { "fixable" } else { "no fix available" }
+                        ),
+                        format!("security-{}-{}", package_name, severity),
+                    )
+                    .with_risk_score(risk_score)
+                    .with_urgency(urgency)
+                    .with_impact(impact)
+                    .with_confidence(if is_fixable { 0.95 } else { 0.7 })
+                    .with_evidence(serde_json::json!({
+                        "package": package_name,
+                        "severity": severity,
+                        "fixable": is_fixable,
+                    })),
+                );
+            }
+        }
+
+        Ok(candidates)
+    }
+}
+
 impl SignalCollector for SecurityCollector {
     fn name(&self) -> &str {
         "security"
     }
 
     fn collect(&self, _ctx: &RepoContext) -> Result<Vec<Candidate>, String> {
-        // In a real implementation, this would run npm audit, cargo audit, etc.
+        // In a real implementation, this would run npm audit or cargo audit
+        // For now, return empty to indicate no vulnerabilities
         Ok(vec![])
     }
 }
@@ -199,13 +259,108 @@ impl SignalCollector for SecurityCollector {
 /// Dependency update collector.
 pub struct DependencyCollector;
 
+impl DependencyCollector {
+    /// Classify the bump type based on version difference.
+    ///
+    /// Examples: "1.2.3" -> "2.0.0" = Major, "1.2.3" -> "1.3.0" = Minor, "1.2.3" -> "1.2.4" = Patch
+    pub fn classify_bump(from: &str, to: &str) -> &'static str {
+        let from_parts: Vec<&str> = from.split('.').collect();
+        let to_parts: Vec<&str> = to.split('.').collect();
+
+        if from_parts.is_empty() || to_parts.is_empty() {
+            return "unknown";
+        }
+
+        if from_parts.first() != to_parts.first() {
+            return "major";
+        }
+        if from_parts.get(1) != to_parts.get(1) {
+            return "minor";
+        }
+        if from_parts.get(2) != to_parts.get(2) {
+            return "patch";
+        }
+        "none"
+    }
+
+    /// Parse outdated dependencies output into candidates.
+    ///
+    /// Expected format: `package-name: current=1.2.3, latest=1.2.4`
+    pub fn parse_outdated(output: &str) -> Vec<Candidate> {
+        let mut candidates = vec![];
+
+        for line in output.lines() {
+            if line.trim().is_empty() {
+                continue;
+            }
+
+            // Simple parser: "package-name: current=X.Y.Z, latest=A.B.C"
+            if let Some((package, versions)) = line.split_once(':') {
+                let package_name = package.trim();
+                let mut current = "";
+                let mut latest = "";
+
+                for part in versions.split(',') {
+                    if part.contains("current=") {
+                        current = part.split('=').nth(1).map(|s| s.trim()).unwrap_or("");
+                    }
+                    if part.contains("latest=") {
+                        latest = part.split('=').nth(1).map(|s| s.trim()).unwrap_or("");
+                    }
+                }
+
+                if !current.is_empty() && !latest.is_empty() {
+                    let bump_type = Self::classify_bump(current, latest);
+
+                    let (effort, urgency) = match bump_type {
+                        "major" => (0.8, 0.5),  // Major bumps are risky
+                        "minor" => (0.4, 0.6),  // Minor is low effort, moderate urgency
+                        "patch" => (0.1, 0.8),  // Patch is easy and important
+                        _ => (0.5, 0.5),
+                    };
+
+                    candidates.push(
+                        Candidate::new(
+                            SignalType::Dependency,
+                            Category::DependencyUpdate,
+                            format!("Update {} to {}", package_name, latest),
+                            format!(
+                                "Dependency {} has a {} update: {} -> {}",
+                                package_name, bump_type, current, latest
+                            ),
+                            format!("dep-{}-{}", package_name, latest),
+                        )
+                        .with_urgency(urgency)
+                        .with_effort(effort)
+                        .with_confidence(0.9)
+                        .with_risk_score(match bump_type {
+                            "major" => 60,
+                            "minor" => 20,
+                            "patch" => 5,
+                            _ => 30,
+                        })
+                        .with_evidence(serde_json::json!({
+                            "package": package_name,
+                            "current": current,
+                            "latest": latest,
+                            "type": bump_type,
+                        })),
+                    );
+                }
+            }
+        }
+
+        candidates
+    }
+}
+
 impl SignalCollector for DependencyCollector {
     fn name(&self) -> &str {
         "dependency"
     }
 
     fn collect(&self, _ctx: &RepoContext) -> Result<Vec<Candidate>, String> {
-        // In a real implementation, this would check for outdated dependencies
+        // In a real implementation, this would run npm outdated, cargo outdated, etc.
         Ok(vec![])
     }
 }
@@ -323,6 +478,62 @@ impl SignalCollector for HandSignalCollector {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_security_collector_parse_npm_audit() {
+        let npm_output = r#"{
+  "vulnerabilities": {
+    "lodash": {
+      "severity": "high",
+      "fixAvailable": true
+    },
+    "moment": {
+      "severity": "critical",
+      "fixAvailable": true
+    }
+  }
+}"#;
+
+        let candidates = SecurityCollector::parse_npm_audit(npm_output).unwrap();
+        assert_eq!(candidates.len(), 2);
+
+        let high_vuln = candidates.iter().find(|c| c.title.contains("lodash")).unwrap();
+        assert_eq!(high_vuln.risk_score, 80);
+        assert_eq!(high_vuln.urgency, 0.9);
+
+        let critical_vuln = candidates.iter().find(|c| c.title.contains("moment")).unwrap();
+        assert_eq!(critical_vuln.risk_score, 95);
+        assert_eq!(critical_vuln.urgency, 1.0);
+    }
+
+    #[test]
+    fn test_dependency_collector_classify_bump() {
+        assert_eq!(DependencyCollector::classify_bump("1.2.3", "2.0.0"), "major");
+        assert_eq!(DependencyCollector::classify_bump("1.2.3", "1.3.0"), "minor");
+        assert_eq!(DependencyCollector::classify_bump("1.2.3", "1.2.4"), "patch");
+        assert_eq!(DependencyCollector::classify_bump("1.2.3", "1.2.3"), "none");
+    }
+
+    #[test]
+    fn test_dependency_collector_parse_outdated() {
+        let output = "lodash: current=4.17.20, latest=4.17.21\nmoment: current=2.29.0, latest=2.29.4";
+        let candidates = DependencyCollector::parse_outdated(output);
+        assert_eq!(candidates.len(), 2);
+
+        let patch_bump = candidates
+            .iter()
+            .find(|c| c.title.contains("moment"))
+            .unwrap();
+        assert_eq!(patch_bump.effort, 0.1);  // Patch is easy
+        assert_eq!(patch_bump.urgency, 0.8); // Patch is urgent
+
+        let patch_bump2 = candidates
+            .iter()
+            .find(|c| c.title.contains("lodash"))
+            .unwrap();
+        assert_eq!(patch_bump2.effort, 0.1);
+        assert_eq!(patch_bump2.risk_score, 5);  // Patch has low risk
+    }
 
     #[test]
     fn test_candidate_new() {
