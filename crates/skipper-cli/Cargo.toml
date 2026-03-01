@@ -1,0 +1,33 @@
+[package]
+name = "skipper-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "CLI tool for the Skipper Agent OS"
+
+[[bin]]
+name = "skipper"
+path = "src/main.rs"
+
+[dependencies]
+skipper-types = { path = "../skipper-types" }
+skipper-kernel = { path = "../skipper-kernel" }
+skipper-api = { path = "../skipper-api" }
+skipper-migrate = { path = "../skipper-migrate" }
+skipper-skills = { path = "../skipper-skills" }
+skipper-extensions = { path = "../skipper-extensions" }
+zeroize = { workspace = true }
+tokio = { workspace = true }
+clap = { workspace = true }
+clap_complete = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+dirs = { workspace = true }
+reqwest = { workspace = true, features = ["blocking"] }
+skipper-runtime = { path = "../skipper-runtime" }
+uuid = { workspace = true }
+ratatui = { workspace = true }
+colored = { workspace = true }

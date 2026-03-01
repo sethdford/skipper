@@ -1,0 +1,41 @@
+[package]
+name = "skipper-api"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "HTTP/WebSocket API server for the Skipper Agent OS daemon"
+
+[dependencies]
+skipper-types = { path = "../skipper-types" }
+skipper-kernel = { path = "../skipper-kernel" }
+skipper-runtime = { path = "../skipper-runtime" }
+skipper-memory = { path = "../skipper-memory" }
+skipper-channels = { path = "../skipper-channels" }
+skipper-wire = { path = "../skipper-wire" }
+skipper-skills = { path = "../skipper-skills" }
+skipper-hands = { path = "../skipper-hands" }
+skipper-extensions = { path = "../skipper-extensions" }
+skipper-migrate = { path = "../skipper-migrate" }
+dashmap = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+tracing = { workspace = true }
+async-trait = { workspace = true }
+axum = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+futures = { workspace = true }
+governor = { workspace = true }
+tokio-stream = { workspace = true }
+subtle = { workspace = true }
+base64 = { workspace = true }
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+reqwest = { workspace = true }
+tempfile = { workspace = true }
+uuid = { workspace = true }

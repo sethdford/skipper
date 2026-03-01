@@ -1,0 +1,40 @@
+[package]
+name = "skipper-runtime"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Agent runtime and execution environment for Skipper"
+
+[dependencies]
+skipper-types = { path = "../skipper-types" }
+skipper-memory = { path = "../skipper-memory" }
+skipper-skills = { path = "../skipper-skills" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+reqwest = { workspace = true }
+thiserror = { workspace = true }
+async-trait = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+futures = { workspace = true }
+base64 = { workspace = true }
+bytes = { workspace = true }
+tokio-stream = { workspace = true }
+wasmtime = { workspace = true }
+anyhow = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+zeroize = { workspace = true }
+dashmap = { workspace = true }
+regex-lite = { workspace = true }
+skipper-shipwright = { path = "../skipper-shipwright", optional = true }
+
+[features]
+default = ["shipwright"]
+shipwright = ["dep:skipper-shipwright"]
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+tempfile = { workspace = true }
