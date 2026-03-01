@@ -22,7 +22,7 @@ members = [
 version = "0.2.3"
 edition = "2021"
 license = "Apache-2.0 OR MIT"
-repository = "https://github.com/RightNow-AI/skipper"
+repository = "https://github.com/sethdford/skipper"
 rust-version = "1.75"
 
 [workspace.dependencies]

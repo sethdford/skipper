@@ -29,7 +29,7 @@
 
 > **v0.1.0 — First Release (February 2026)**
 >
-> Skipper is feature-complete but this is the first public release. You may encounter instability, rough edges, or breaking changes between minor versions. We ship fast and fix fast. Pin to a specific commit for production use until v1.0. [Report issues here.](https://github.com/RightNow-AI/skipper/issues)
+> Skipper is feature-complete but this is the first public release. You may encounter instability, rough edges, or breaking changes between minor versions. We ship fast and fix fast. Pin to a specific commit for production use until v1.0. [Report issues here.](https://github.com/sethdford/skipper/issues)
 
 ---
 
@@ -375,7 +375,7 @@ Skipper v0.1.0 is the first public release. The architecture is solid, the test 
 
 - **Breaking changes** may occur between minor versions until v1.0
 - **Some Hands** are more mature than others (Browser and Researcher are the most battle-tested)
-- **Edge cases** exist — if you find one, [open an issue](https://github.com/RightNow-AI/skipper/issues)
+- **Edge cases** exist — if you find one, [open an issue](https://github.com/sethdford/skipper/issues)
 - **Pin to a specific commit** for production deployments until v1.0
 
 We ship fast and fix fast. The goal is a rock-solid v1.0 by mid-2026.
@@ -392,7 +392,7 @@ MIT — use it however you want.
 
 - [Website & Documentation](https://skipper.sh)
 - [Quick Start Guide](https://skipper.sh/docs/getting-started)
-- [GitHub](https://github.com/RightNow-AI/skipper)
+- [GitHub](https://github.com/sethdford/skipper)
 - [Discord](https://discord.gg/sSJqgNnq6X)
 - [Twitter / X](https://x.com/skipperg)
 

@@ -985,7 +985,7 @@ complex_threshold = 500
     let config_path = skipper_dir.join("config.toml");
     let config = format!(
         r#"# Skipper Agent OS configuration
-# See https://github.com/RightNow-AI/skipper for documentation
+# See https://github.com/sethdford/skipper for documentation
 
 api_listen = "127.0.0.1:4200"
 

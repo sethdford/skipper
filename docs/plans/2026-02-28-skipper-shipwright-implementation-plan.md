@@ -18,7 +18,7 @@ Before starting, complete these one-time setup steps:
 
 ```bash
 # 1. Fork Skipper
-gh repo fork RightNow-AI/skipper --clone --remote
+gh repo fork sethdford/skipper --clone --remote
 
 # 2. Verify build
 cd skipper

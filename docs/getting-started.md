@@ -18,7 +18,7 @@ This guide walks you through installing Skipper, configuring your first LLM prov
 
 ### Option 1: Desktop App (Windows / macOS / Linux)
 
-Download the installer for your platform from the [latest release](https://github.com/RightNow-AI/skipper/releases/latest):
+Download the installer for your platform from the [latest release](https://github.com/sethdford/skipper/releases/latest):
 
 | Platform | File |
 |---|---|
@@ -49,13 +49,13 @@ Downloads the latest CLI binary, verifies its SHA256 checksum, and adds it to yo
 Requires Rust 1.75+:
 
 ```bash
-cargo install --git https://github.com/RightNow-AI/skipper skipper-cli
+cargo install --git https://github.com/sethdford/skipper skipper-cli
 ```
 
 Or build from source:
 
 ```bash
-git clone https://github.com/RightNow-AI/skipper.git
+git clone https://github.com/sethdford/skipper.git
 cd skipper
 cargo install --path crates/skipper-cli
 ```
@@ -63,20 +63,20 @@ cargo install --path crates/skipper-cli
 ### Option 5: Docker
 
 ```bash
-docker pull ghcr.io/RightNow-AI/skipper:latest
+docker pull ghcr.io/sethdford/skipper:latest
 
 docker run -d \
   --name skipper \
   -p 4200:4200 \
   -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
   -v skipper-data:/data \
-  ghcr.io/RightNow-AI/skipper:latest
+  ghcr.io/sethdford/skipper:latest
 ```
 
 Or use Docker Compose:
 
 ```bash
-git clone https://github.com/RightNow-AI/skipper.git
+git clone https://github.com/sethdford/skipper.git
 cd skipper
 # Set your API keys in environment or .env file
 docker compose up -d

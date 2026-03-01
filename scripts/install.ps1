@@ -8,7 +8,7 @@
 
 $ErrorActionPreference = 'Stop'
 
-$Repo = "RightNow-AI/skipper"
+$Repo = "sethdford/skipper"
 $DefaultInstallDir = Join-Path $env:USERPROFILE ".skipper\bin"
 $InstallDir = if ($env:SKIPPER_INSTALL_DIR) { $env:SKIPPER_INSTALL_DIR } else { $DefaultInstallDir }
 
@@ -53,7 +53,7 @@ function Get-Architecture {
         { $_ -in "ARM64", "AARCH64", "ARM" }     { return "aarch64" }
         default {
             Write-Host "  Unsupported architecture: $arch (detection may have failed)" -ForegroundColor Red
-            Write-Host "  Try: cargo install --git https://github.com/RightNow-AI/skipper skipper-cli" -ForegroundColor Yellow
+            Write-Host "  Try: cargo install --git https://github.com/sethdford/skipper skipper-cli" -ForegroundColor Yellow
             exit 1
         }
     }

@@ -28,7 +28,7 @@ Thank you for your interest in contributing to Skipper. This guide covers everyt
 ### Clone and Build
 
 ```bash
-git clone https://github.com/RightNow-AI/skipper.git
+git clone https://github.com/sethdford/skipper.git
 cd skipper
 cargo build
 ```
@@ -356,6 +356,6 @@ Please report unacceptable behavior to the maintainers.
 
 ## Questions?
 
-- Open a [GitHub Discussion](https://github.com/RightNow-AI/skipper/discussions) for questions.
-- Open a [GitHub Issue](https://github.com/RightNow-AI/skipper/issues) for bugs or feature requests.
+- Open a [GitHub Discussion](https://github.com/sethdford/skipper/discussions) for questions.
+- Open a [GitHub Issue](https://github.com/sethdford/skipper/issues) for bugs or feature requests.
 - Check the [docs/](docs/) directory for detailed guides on specific topics.

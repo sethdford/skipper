@@ -91,7 +91,7 @@ export PATH="$HOME/.cargo/bin:$PATH"
 ### Docker container won't start
 
 **Common causes**:
-- No API key provided: `docker run -e GROQ_API_KEY=... ghcr.io/RightNow-AI/skipper`
+- No API key provided: `docker run -e GROQ_API_KEY=... ghcr.io/sethdford/skipper`
 - Port already in use: change the port mapping `-p 3001:4200`
 - Permission denied on volume mount: check directory permissions
 
@@ -470,7 +470,7 @@ Yes. Each agent can use a different provider via its manifest `[model]` section.
 cd skipper && git pull && cargo install --path crates/skipper-cli
 
 # Docker
-docker pull ghcr.io/RightNow-AI/skipper:latest
+docker pull ghcr.io/sethdford/skipper:latest
 ```
 
 ### Can agents talk to each other?

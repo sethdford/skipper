@@ -80,7 +80,7 @@ const AFTER_HELP: &str = "\
   3. skipper chat              Start chatting!
 
 \x1b[1;36mMore:\x1b[0m
-  Docs:       https://github.com/RightNow-AI/skipper
+  Docs:       https://github.com/sethdford/skipper
   Dashboard:  http://127.0.0.1:4200/ (when daemon is running)";
 
 /// Skipper — the open-source Agent Operating System.
@@ -1258,7 +1258,7 @@ fn write_config_if_missing(
     } else {
         let default_config = format!(
             r#"# Skipper Agent OS configuration
-# See https://github.com/RightNow-AI/skipper for documentation
+# See https://github.com/sethdford/skipper for documentation
 
 # For Docker, change to "0.0.0.0:4200" or set SKIPPER_LISTEN env var.
 api_listen = "127.0.0.1:4200"
@@ -1920,7 +1920,7 @@ fn cmd_doctor(json: bool, repair: bool) {
             let answer = prompt_input("    Create default config? [Y/n] ");
             if answer.is_empty() || answer.starts_with('y') || answer.starts_with('Y') {
                 let default_config = r#"# Skipper Agent OS configuration
-# See https://github.com/RightNow-AI/skipper for documentation
+# See https://github.com/sethdford/skipper for documentation
 
 # For Docker, change to "0.0.0.0:4200" or set SKIPPER_LISTEN env var.
 api_listen = "127.0.0.1:4200"

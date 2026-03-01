@@ -108,7 +108,7 @@ jobs:
           releaseBody: |
             ## What's New
 
-            See the [CHANGELOG](https://github.com/RightNow-AI/skipper/blob/main/CHANGELOG.md) for full details.
+            See the [CHANGELOG](https://github.com/sethdford/skipper/blob/main/CHANGELOG.md) for full details.
 
             ## Installation
 

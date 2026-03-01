@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-REPO="RightNow-AI/skipper"
+REPO="sethdford/skipper"
 INSTALL_DIR="${SKIPPER_INSTALL_DIR:-$HOME/.skipper/bin}"
 
 detect_platform() {

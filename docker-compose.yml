@@ -1,6 +1,6 @@
 # NOTE: The GHCR image (ghcr.io/rightnow-ai/skipper) is not yet public.
 # For now, build from source using `docker compose up --build`.
-# See: https://github.com/RightNow-AI/skipper/issues/12
+# See: https://github.com/sethdford/skipper/issues/12
 
 version: "3.8"
 services:
