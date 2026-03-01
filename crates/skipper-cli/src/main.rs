@@ -4,6 +4,7 @@
 //! Otherwise, commands boot an in-process kernel (single-shot mode).
 
 mod bundled_agents;
+mod commands;
 mod dotenv;
 mod launcher;
 mod mcp;
@@ -798,11 +799,11 @@ fn main() {
         Some(Commands::Start) => cmd_start(cli.config),
         Some(Commands::Stop) => cmd_stop(),
         Some(Commands::Agent(sub)) => match sub {
-            AgentCommands::New { template } => cmd_agent_new(cli.config, template),
-            AgentCommands::Spawn { manifest } => cmd_agent_spawn(cli.config, manifest),
-            AgentCommands::List { json } => cmd_agent_list(cli.config, json),
-            AgentCommands::Chat { agent_id } => cmd_agent_chat(cli.config, &agent_id),
-            AgentCommands::Kill { agent_id } => cmd_agent_kill(cli.config, &agent_id),
+            AgentCommands::New { template } => commands::cmd_agent_new(cli.config, template),
+            AgentCommands::Spawn { manifest } => commands::cmd_agent_spawn(cli.config, manifest),
+            AgentCommands::List { json } => commands::cmd_agent_list(cli.config, json),
+            AgentCommands::Chat { agent_id } => commands::cmd_agent_chat(cli.config, &agent_id),
+            AgentCommands::Kill { agent_id } => commands::cmd_agent_kill(cli.config, &agent_id),
         },
         Some(Commands::Workflow(sub)) => match sub {
             WorkflowCommands::List => cmd_workflow_list(),
@@ -821,28 +822,28 @@ fn main() {
         },
         Some(Commands::Migrate(args)) => cmd_migrate(args),
         Some(Commands::Skill(sub)) => match sub {
-            SkillCommands::Install { source } => cmd_skill_install(&source),
-            SkillCommands::List => cmd_skill_list(),
-            SkillCommands::Remove { name } => cmd_skill_remove(&name),
-            SkillCommands::Search { query } => cmd_skill_search(&query),
-            SkillCommands::Create => cmd_skill_create(),
+            SkillCommands::Install { source } => commands::cmd_skill_install(&source),
+            SkillCommands::List => commands::cmd_skill_list(),
+            SkillCommands::Remove { name } => commands::cmd_skill_remove(&name),
+            SkillCommands::Search { query } => commands::cmd_skill_search(&query),
+            SkillCommands::Create => commands::cmd_skill_create(),
         },
         Some(Commands::Channel(sub)) => match sub {
-            ChannelCommands::List => cmd_channel_list(),
-            ChannelCommands::Setup { channel } => cmd_channel_setup(channel.as_deref()),
-            ChannelCommands::Test { channel } => cmd_channel_test(&channel),
-            ChannelCommands::Enable { channel } => cmd_channel_toggle(&channel, true),
-            ChannelCommands::Disable { channel } => cmd_channel_toggle(&channel, false),
+            ChannelCommands::List => commands::cmd_channel_list(),
+            ChannelCommands::Setup { channel } => commands::cmd_channel_setup(channel.as_deref()),
+            ChannelCommands::Test { channel } => commands::cmd_channel_test(&channel),
+            ChannelCommands::Enable { channel } => commands::cmd_channel_toggle(&channel, true),
+            ChannelCommands::Disable { channel } => commands::cmd_channel_toggle(&channel, false),
         },
         Some(Commands::Config(sub)) => match sub {
-            ConfigCommands::Show => cmd_config_show(),
-            ConfigCommands::Edit => cmd_config_edit(),
-            ConfigCommands::Get { key } => cmd_config_get(&key),
-            ConfigCommands::Set { key, value } => cmd_config_set(&key, &value),
-            ConfigCommands::Unset { key } => cmd_config_unset(&key),
-            ConfigCommands::SetKey { provider } => cmd_config_set_key(&provider),
-            ConfigCommands::DeleteKey { provider } => cmd_config_delete_key(&provider),
-            ConfigCommands::TestKey { provider } => cmd_config_test_key(&provider),
+            ConfigCommands::Show => commands::cmd_config_show(),
+            ConfigCommands::Edit => commands::cmd_config_edit(),
+            ConfigCommands::Get { key } => commands::cmd_config_get(&key),
+            ConfigCommands::Set { key, value } => commands::cmd_config_set(&key, &value),
+            ConfigCommands::Unset { key } => commands::cmd_config_unset(&key),
+            ConfigCommands::SetKey { provider } => commands::cmd_config_set_key(&provider),
+            ConfigCommands::DeleteKey { provider } => commands::cmd_config_delete_key(&provider),
+            ConfigCommands::TestKey { provider } => commands::cmd_config_test_key(&provider),
         },
         Some(Commands::Chat { agent }) => cmd_quick_chat(cli.config, agent),
         Some(Commands::Status { json }) => cmd_status(cli.config, json),
