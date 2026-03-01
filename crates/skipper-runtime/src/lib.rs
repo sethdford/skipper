@@ -43,8 +43,11 @@ pub mod shell_bleed;
 pub mod str_utils;
 pub mod subprocess_sandbox;
 pub mod tool_policy;
-pub mod tool_runner;
+pub mod tools;
 pub mod tts;
+
+// Re-export for backward compatibility
+pub use tools as tool_runner;
 pub mod web_cache;
 pub mod web_content;
 pub mod web_fetch;
