@@ -204,9 +204,9 @@ impl LlmDriver for AnthropicDriver {
             let resp = self
                 .client
                 .post(&url)
-                .header("x-api-key", self.api_key.as_str())
                 .header("anthropic-version", "2023-06-01")
                 .header("content-type", "application/json")
+                .header("x-api-key", self.api_key.as_str())
                 .json(&api_request)
                 .send()
                 .await
@@ -311,9 +311,9 @@ impl LlmDriver for AnthropicDriver {
             let resp = self
                 .client
                 .post(&url)
-                .header("x-api-key", self.api_key.as_str())
                 .header("anthropic-version", "2023-06-01")
                 .header("content-type", "application/json")
+                .header("x-api-key", self.api_key.as_str())
                 .json(&api_request)
                 .send()
                 .await

@@ -527,10 +527,31 @@ impl OpenFangKernel {
         );
 
         // Create LLM driver
+        let mut provider = config.default_model.provider.clone();
+        let mut api_key = std::env::var(&config.default_model.api_key_env)
+            .ok()
+            .filter(|v| !v.is_empty());
+        let mut base_url = config.default_model.base_url.clone();
+
+        // Auto-detect Claude Code fallback: if the provider is "anthropic" and the
+        // resolved key is an OAuth token (sk-ant-oat*), those tokens cannot call
+        // api.anthropic.com directly. Switch to the claude-code CLI driver instead.
+        if provider == "anthropic" {
+            let is_oauth_token = api_key.as_ref().is_some_and(|k| k.starts_with("sk-ant-oat"));
+            if (is_oauth_token || api_key.is_none())
+                && drivers::claude_code::ClaudeCodeDriver::detect().is_some()
+            {
+                info!("OAuth token detected or no API key — using Claude Code CLI as LLM backend");
+                provider = "claude-code".to_string();
+                api_key = None;
+                base_url = None;
+            }
+        }
+
         let driver_config = DriverConfig {
-            provider: config.default_model.provider.clone(),
-            api_key: std::env::var(&config.default_model.api_key_env).ok(),
-            base_url: config.default_model.base_url.clone(),
+            provider,
+            api_key,
+            base_url,
         };
         let primary_driver = drivers::create_driver(&driver_config)
             .map_err(|e| KernelError::BootFailed(format!("LLM driver init failed: {e}")))?;
