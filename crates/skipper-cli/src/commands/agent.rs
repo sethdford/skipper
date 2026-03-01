@@ -1,7 +1,6 @@
 //! Agent command handlers: spawn, list, chat, kill, new.
 
 use crate::{boot_kernel, daemon_client, daemon_json, find_daemon, prompt_input, templates, tui, ui};
-use colored::Colorize;
 use skipper_types::agent::{AgentId, AgentManifest};
 use std::path::PathBuf;
 

@@ -3,7 +3,6 @@
 use crate::{dotenv, prompt_input, restrict_file_permissions, skipper_home, test_api_key, ui, provider_to_env_var};
 use colored::Colorize;
 use std::io::{self, Write};
-use std::path::PathBuf;
 
 /// Show the current configuration.
 pub fn cmd_config_show() {
