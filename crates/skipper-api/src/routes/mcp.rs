@@ -1,17 +1,21 @@
 //! Model Context Protocol (MCP) server endpoint for Claude Code integration.
 //!
 //! This module implements a JSON-RPC 2.0 MCP endpoint that allows Claude Code
-//! to interact with Skipper natively. The endpoint exposes tools for:
+//! to interact with Skipper natively. The endpoint exposes Skipper-specific tools for:
 //! - Spawning and managing agents
 //! - Listing agents
 //! - Sending messages to agents
 //! - Managing pipelines and fleets
+//!
+//! It integrates with the existing runtime MCP server framework and adds Skipper-specific
+//! tools on top of the standard tool definitions.
 //!
 //! Reference: https://spec.modelcontextprotocol.io/
 
 use super::*;
 use serde_json::{json, Value};
 use std::str::FromStr;
+use skipper_runtime::tool_runner::builtin_tool_definitions;
 
 // ---------------------------------------------------------------------------
 // MCP Tool Definitions
@@ -111,11 +115,11 @@ fn get_mcp_tools() -> Vec<McpTool> {
 /// JSON-RPC 2.0 request.
 #[derive(Debug, serde::Deserialize)]
 pub struct JsonRpcRequest {
-    jsonrpc: String,
-    id: serde_json::Value,
-    method: String,
+    pub jsonrpc: String,
+    pub id: serde_json::Value,
+    pub method: String,
     #[serde(default)]
-    params: serde_json::Value,
+    pub params: serde_json::Value,
 }
 
 /// JSON-RPC 2.0 response.
@@ -214,14 +218,33 @@ fn handle_initialize() -> Result<Value, JsonRpcError> {
 }
 
 /// Handle the MCP tools/list request.
+/// Returns both built-in tools and Skipper-specific tools.
 fn handle_tools_list() -> Result<Value, JsonRpcError> {
-    let tools = get_mcp_tools();
+    let skipper_tools = get_mcp_tools();
+    let builtin_tools = builtin_tool_definitions();
+
+    let mut all_tools = Vec::new();
+
+    // Add built-in tools
+    for tool in builtin_tools.iter() {
+        all_tools.push(json!({
+            "name": tool.name,
+            "description": tool.description,
+            "inputSchema": tool.input_schema,
+        }));
+    }
+
+    // Add Skipper-specific tools
+    for tool in skipper_tools.iter() {
+        all_tools.push(json!({
+            "name": tool.name,
+            "description": tool.description,
+            "inputSchema": tool.input_schema,
+        }));
+    }
+
     Ok(json!({
-        "tools": tools.iter().map(|t| json!({
-            "name": t.name,
-            "description": t.description,
-            "inputSchema": t.input_schema,
-        })).collect::<Vec<_>>()
+        "tools": all_tools
     }))
 }
 
