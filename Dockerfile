@@ -7,14 +7,14 @@ COPY crates ./crates
 COPY xtask ./xtask
 COPY agents ./agents
 COPY packages ./packages
-RUN cargo build --release --bin openfang
+RUN cargo build --release --bin skipper
 
 FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /build/target/release/openfang /usr/local/bin/
-COPY --from=builder /build/agents /opt/openfang/agents
+COPY --from=builder /build/target/release/skipper /usr/local/bin/
+COPY --from=builder /build/agents /opt/skipper/agents
 EXPOSE 4200
 VOLUME /data
-ENV OPENFANG_HOME=/data
-ENTRYPOINT ["openfang"]
+ENV SKIPPER_HOME=/data
+ENTRYPOINT ["skipper"]
 CMD ["start"]
