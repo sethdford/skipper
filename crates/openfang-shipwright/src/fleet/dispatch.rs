@@ -156,13 +156,47 @@ impl Dispatcher {
         self.allocated_per_repo.get(repo).copied().unwrap_or(0)
     }
 
-    /// Rebalance workers proportionally to queue depth (stub).
+    /// Rebalance workers proportionally to queue depth.
+    /// - Calculate total queue depth across all repos
+    /// - Distribute workers proportionally: workers_for_repo = max(min_per_repo, total_workers * repo_depth / total_depth)
+    /// - Respect pool.total_workers ceiling
+    /// - Repos with 0 queue depth still get min_per_repo if they already have active claims
+    /// - Only count repos with non-zero depth for proportional distribution
     pub fn rebalance(&mut self, queue_depths: &HashMap<String, u32>) {
+        // Calculate total queue depth (only from repos with non-zero depth)
+        let total_depth: u32 = queue_depths.values().filter(|&&d| d > 0).sum();
+
+        if total_depth == 0 {
+            // No work queued, nothing to rebalance
+            return;
+        }
+
+        // New allocation map
+        let mut new_allocation: HashMap<String, u32> = HashMap::new();
+
+        // Proportional distribution
         for (repo, depth) in queue_depths {
-            if *depth > 0 && !self.allocated_per_repo.contains_key(repo) {
-                self.allocated_per_repo.insert(repo.clone(), 1);
+            if *depth > 0 {
+                // workers_for_repo = max(min_per_repo, (total_workers * repo_depth) / total_depth)
+                let proportional = (self.pool.total_workers * depth) / total_depth;
+                let allocated = proportional.max(self.pool.min_per_repo);
+                new_allocation.insert(repo.clone(), allocated);
+            } else if self.allocated_per_repo.contains_key(repo) {
+                // Repos with 0 depth but existing claims keep min_per_repo
+                new_allocation.insert(repo.clone(), self.pool.min_per_repo);
             }
         }
+
+        // Enforce total ceiling: adjust down proportionally if exceeds total_workers
+        let total_allocated: u32 = new_allocation.values().sum();
+        if total_allocated > self.pool.total_workers {
+            let scale_factor = self.pool.total_workers as f64 / total_allocated as f64;
+            for workers in new_allocation.values_mut() {
+                *workers = ((*workers as f64 * scale_factor).floor() as u32).max(1);
+            }
+        }
+
+        self.allocated_per_repo = new_allocation;
     }
 }
 
@@ -206,26 +240,21 @@ mod tests {
 
     #[test]
     fn test_suggest_scaled_workers_cpu_limited() {
-        let mut pool = WorkerPool::default();
-        pool.auto_scale = true;
+        let pool = WorkerPool { auto_scale: true, ..Default::default() };
         let suggested = pool.suggest_scaled_workers(8, 32, 100.0).unwrap();
         assert_eq!(suggested, 6);
     }
 
     #[test]
     fn test_suggest_scaled_workers_memory_limited() {
-        let mut pool = WorkerPool::default();
-        pool.auto_scale = true;
-        pool.worker_mem_gb = 4;
+        let pool = WorkerPool { auto_scale: true, worker_mem_gb: 4, ..Default::default() };
         let suggested = pool.suggest_scaled_workers(8, 8, 100.0).unwrap();
         assert_eq!(suggested, 2);
     }
 
     #[test]
     fn test_suggest_scaled_workers_budget_limited() {
-        let mut pool = WorkerPool::default();
-        pool.auto_scale = true;
-        pool.cost_per_job_usd = 5.0;
+        let pool = WorkerPool { auto_scale: true, cost_per_job_usd: 5.0, ..Default::default() };
         let suggested = pool.suggest_scaled_workers(8, 32, 10.0).unwrap();
         assert_eq!(suggested, 2);
     }
@@ -238,33 +267,25 @@ mod tests {
 
     #[test]
     fn test_worker_pool_validation_zero_mem_gb() {
-        let mut pool = WorkerPool::default();
-        pool.worker_mem_gb = 0;
+        let pool = WorkerPool { worker_mem_gb: 0, ..Default::default() };
         assert!(pool.validate().is_err());
     }
 
     #[test]
     fn test_worker_pool_validation_min_greater_than_max() {
-        let mut pool = WorkerPool::default();
-        pool.min_workers = 10;
-        pool.max_workers = 5;
+        let pool = WorkerPool { min_workers: 10, max_workers: 5, ..Default::default() };
         assert!(pool.validate().is_err());
     }
 
     #[test]
     fn test_suggest_scaled_workers_rejects_zero_mem_gb() {
-        let mut pool = WorkerPool::default();
-        pool.auto_scale = true;
-        pool.worker_mem_gb = 0;
+        let pool = WorkerPool { auto_scale: true, worker_mem_gb: 0, ..Default::default() };
         assert!(pool.suggest_scaled_workers(8, 32, 100.0).is_err());
     }
 
     #[test]
     fn test_suggest_scaled_workers_rejects_invalid_min_max() {
-        let mut pool = WorkerPool::default();
-        pool.auto_scale = true;
-        pool.min_workers = 10;
-        pool.max_workers = 5;
+        let pool = WorkerPool { auto_scale: true, min_workers: 10, max_workers: 5, ..Default::default() };
         assert!(pool.suggest_scaled_workers(8, 32, 100.0).is_err());
     }
 

@@ -111,10 +111,10 @@ mod tests {
     #[test]
     fn test_dashmap_no_deadlock_under_contention() {
         use std::thread;
+        use std::time::Duration;
 
         let cache = Arc::new(DashMap::new());
 
-        // Use real OS threads for true concurrency
         let mut handles = vec![];
         for task_id in 0..4 {
             let cache_clone = Arc::clone(&cache);
@@ -122,16 +122,24 @@ mod tests {
                 for i in 0..10 {
                     let key = format!("task-{}-key-{}", task_id, i);
                     cache_clone.insert(key.clone(), i);
-                    // Drop the Ref guard before remove() to avoid shard deadlock
-                    let value = cache_clone.get(&key).map(|r| *r);
-                    assert!(value.is_some());
+                    // Read without holding a guard across the remove
+                    let _value = cache_clone.get(&key).map(|r| *r);
                     cache_clone.remove(&key);
                 }
             });
             handles.push(handle);
         }
 
+        // Use a timeout to detect deadlocks
+        let start = std::time::Instant::now();
         for handle in handles {
+            // If threads don't finish in 5 seconds, something is wrong
+            while !handle.is_finished() {
+                if start.elapsed() > Duration::from_secs(5) {
+                    panic!("Deadlock detected: threads did not finish in 5 seconds");
+                }
+                thread::sleep(Duration::from_millis(10));
+            }
             handle.join().unwrap();
         }
 

@@ -288,6 +288,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_pipeline_state_advance() {
         let state = PipelineState::Running {
             current_stage: Stage::Build,
@@ -307,6 +308,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_pipeline_state_advance_to_completed() {
         let state = PipelineState::Running {
             current_stage: Stage::Monitor,
@@ -441,6 +443,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_invalid_state_transition() {
         let state = PipelineState::Completed { pr_url: None };
         assert!(state.advance().is_err());
@@ -524,7 +527,7 @@ mod tests {
             current_stage: Stage::Review,
             iteration: 0,
         };
-        let next = state.advance_with_stages(&full_stages).unwrap();
+        let next = state.advance_with_stages(full_stages).unwrap();
         match next {
             PipelineState::Running {
                 current_stage,

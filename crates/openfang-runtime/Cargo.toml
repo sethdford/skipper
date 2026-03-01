@@ -29,6 +29,11 @@ hex = { workspace = true }
 zeroize = { workspace = true }
 dashmap = { workspace = true }
 regex-lite = { workspace = true }
+openfang-shipwright = { path = "../openfang-shipwright", optional = true }
+
+[features]
+default = ["shipwright"]
+shipwright = ["dep:openfang-shipwright"]
 
 [dev-dependencies]
 tokio-test = { workspace = true }

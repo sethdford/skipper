@@ -9,7 +9,6 @@ description = "Software Engineering Hand — autonomous delivery pipelines"
 [dependencies]
 openfang-types = { path = "../openfang-types" }
 openfang-memory = { path = "../openfang-memory" }
-openfang-runtime = { path = "../openfang-runtime" }
 
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

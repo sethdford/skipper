@@ -61,6 +61,11 @@ impl DecisionEngine {
         }
     }
 
+    /// Get the number of registered collectors.
+    pub fn collectors_count(&self) -> usize {
+        self.collectors.len()
+    }
+
     /// Create default set of collectors.
     fn default_collectors() -> Vec<Box<dyn SignalCollector>> {
         vec![

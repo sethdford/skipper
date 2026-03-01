@@ -419,7 +419,7 @@ mod tests {
         assert_eq!(pipeline.stages.len(), 7);
 
         // Verify stages are in correct order
-        let expected = vec![
+        let expected = [
             Stage::Intake,
             Stage::Plan,
             Stage::Design,
@@ -560,7 +560,7 @@ mod tests {
         let progress = pipeline.progress_percent();
         // Monitor is the 12th stage (index 11), so (11 * 100) / 12 = 91%
         assert!(
-            progress >= 85 && progress <= 95,
+            (85..=95).contains(&progress),
             "Failed at Monitor should show ~91% progress, got {}%",
             progress
         );
@@ -595,7 +595,7 @@ mod tests {
         let progress = pipeline.progress_percent();
         // Build is the 4th stage (index 3), so (3 * 100) / 12 = 25%
         assert!(
-            progress >= 20 && progress <= 30,
+            (20..=30).contains(&progress),
             "Paused at Build should show ~25% progress, got {}%",
             progress
         );

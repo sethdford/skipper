@@ -46,7 +46,7 @@ fn test_candidate_creation_and_scoring() {
 
 #[test]
 fn test_memory_store_and_search() {
-    let mut memory = ShipwrightMemory::new();
+    let memory = ShipwrightMemory::new();
     let repo = "my-repo".to_string();
 
     let pattern = FailurePattern::with_stage(

@@ -1,9 +1,8 @@
 //! Memory system tests with failure patterns and learning.
 
 use openfang_shipwright::memory::{
-    ShipwrightMemory, FailurePattern, ArchitectureRule, Outcome, ScoringWeights, ABTest, ABGroup,
+    ShipwrightMemory, FailurePattern, ScoringWeights, ABTest,
 };
-use openfang_shipwright::decision::SignalType;
 use openfang_shipwright::pipeline::Stage;
 
 #[test]
@@ -14,7 +13,7 @@ fn memory_new() {
 
 #[test]
 fn memory_store_and_retrieve_single_failure() {
-    let mut memory = ShipwrightMemory::new();
+    let memory = ShipwrightMemory::new();
 
     let pattern = FailurePattern::with_stage(
         "myrepo".to_string(),
@@ -33,7 +32,7 @@ fn memory_store_and_retrieve_single_failure() {
 
 #[test]
 fn memory_store_large_number_of_failures() {
-    let mut memory = ShipwrightMemory::new();
+    let memory = ShipwrightMemory::new();
 
     for i in 0..100 {
         let pattern = FailurePattern::with_stage(
@@ -53,7 +52,7 @@ fn memory_store_large_number_of_failures() {
 
 #[test]
 fn memory_search_respects_limit() {
-    let mut memory = ShipwrightMemory::new();
+    let memory = ShipwrightMemory::new();
 
     for i in 0..50 {
         let pattern = FailurePattern::with_stage(
@@ -73,7 +72,7 @@ fn memory_search_respects_limit() {
 
 #[test]
 fn memory_search_case_insensitive() {
-    let mut memory = ShipwrightMemory::new();
+    let memory = ShipwrightMemory::new();
 
     let pattern = FailurePattern::with_stage(
         "myrepo".to_string(),

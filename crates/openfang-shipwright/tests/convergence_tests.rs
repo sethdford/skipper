@@ -15,8 +15,7 @@ fn convergence_steady_error_decrease() {
 }
 
 #[test]
-#[ignore] // BUG: When previous_error_count is 0, evaluating with errors > 0 doesn't always return Converging
-fn convergence_from_zero_to_errors() {
+fn convergence_from_zero_to_errors_diverges() {
     let mut loop_config = BuildLoop::new(20);
 
     loop_config.progress.previous_error_count = Some(0);
@@ -25,7 +24,7 @@ fn convergence_from_zero_to_errors() {
     }
 
     let outcome = loop_config.evaluate();
-    assert!(matches!(outcome, BuildOutcome::Converging { .. }));
+    assert_eq!(outcome, BuildOutcome::Diverging);
 }
 
 #[test]

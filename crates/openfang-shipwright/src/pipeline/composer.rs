@@ -49,6 +49,11 @@ impl PipelineComposer {
                 if intel.test_intensity_needed && stage.stage == Stage::Test {
                     stage.max_iterations = (stage.max_iterations as f64 * 2.0) as u32;
                 }
+
+                // Wire estimated_effort_hours: if > 8 hours, increase timeout multipliers for all stages
+                if intel.estimated_effort_hours > 8.0 {
+                    stage.timeout_seconds = (stage.timeout_seconds as f64 * 1.5) as u64;
+                }
             }
 
             // Add more time for risky areas

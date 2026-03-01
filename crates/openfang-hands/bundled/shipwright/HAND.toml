@@ -1,0 +1,177 @@
+id = "shipwright"
+name = "Shipwright Hand"
+description = "Autonomous delivery pipeline — turns issues into tested, reviewed PRs with self-healing build loops"
+category = "development"
+icon = "\u2693"
+tools = [
+    "shipwright_pipeline_start",
+    "shipwright_pipeline_status",
+    "shipwright_stage_advance",
+    "shipwright_decision_run",
+    "shipwright_memory_search",
+    "shipwright_memory_store",
+    "shipwright_fleet_status",
+    "shipwright_intelligence",
+    "shell_exec",
+    "file_read",
+    "file_write",
+    "file_list",
+    "web_fetch",
+    "memory_store",
+    "memory_recall",
+    "knowledge_add_entity",
+    "knowledge_add_relation",
+    "knowledge_query",
+    "event_publish",
+    "agent_spawn",
+    "agent_send",
+    "schedule_create",
+    "schedule_list",
+    "schedule_delete",
+]
+
+[[requires]]
+key = "git"
+label = "Git must be installed"
+requirement_type = "binary"
+check_value = "git"
+description = "Git is required for source control operations in the delivery pipeline."
+
+[requires.install]
+macos = "brew install git"
+windows = "winget install Git.Git"
+linux_apt = "sudo apt install git"
+manual_url = "https://git-scm.com/downloads"
+estimated_time = "1-2 min"
+
+# --- Configurable settings ---
+
+[[settings]]
+key = "pipeline_template"
+label = "Default Pipeline Template"
+description = "Which pipeline template to use for new pipelines"
+setting_type = "select"
+default = "standard"
+
+[[settings.options]]
+value = "fast"
+label = "Fast (4 stages)"
+
+[[settings.options]]
+value = "standard"
+label = "Standard (8 stages)"
+
+[[settings.options]]
+value = "full"
+label = "Full (12 stages)"
+
+[[settings.options]]
+value = "hotfix"
+label = "Hotfix (minimal)"
+
+[[settings.options]]
+value = "autonomous"
+label = "Autonomous (all auto)"
+
+[[settings.options]]
+value = "cost_aware"
+label = "Cost-Aware (budget limits)"
+
+[[settings]]
+key = "max_parallel"
+label = "Max Parallel Pipelines"
+description = "Maximum number of pipelines to run concurrently"
+setting_type = "text"
+default = "2"
+
+[[settings]]
+key = "auto_decide"
+label = "Autonomous Decision Engine"
+description = "Automatically collect signals and decide what to build"
+setting_type = "toggle"
+default = "false"
+
+# --- Agent configuration ---
+
+[agent]
+name = "shipwright-hand"
+description = "Autonomous software delivery agent with 12-stage pipeline, self-healing build loops, and outcome learning"
+module = "builtin:chat"
+provider = "default"
+model = "default"
+max_tokens = 8192
+temperature = 0.3
+max_iterations = 200
+system_prompt = """You are Shipwright, an autonomous software delivery agent. You turn issues and goals into tested, reviewed pull requests using a 12-stage pipeline.
+
+## Your Tools
+
+You have 8 specialized Shipwright tools plus standard file, shell, and web tools:
+
+- **shipwright_pipeline_start** — Start a delivery pipeline from a goal or issue
+- **shipwright_pipeline_status** — Check pipeline state
+- **shipwright_stage_advance** — Advance to the next stage
+- **shipwright_decision_run** — Run the decision engine
+- **shipwright_memory_search** — Search failure patterns
+- **shipwright_memory_store** — Record a failure pattern
+- **shipwright_fleet_status** — View fleet overview
+- **shipwright_intelligence** — DORA metrics, risk, optimization
+
+## Pipeline Stages
+
+1. Intake — Parse requirements
+2. Plan — Decompose into subtasks
+3. Design — Architecture approach
+4. Build — Code implementation (iterative)
+5. Test — Execute test suite
+6. Review — Code review
+7. Compound Quality — Adversarial review
+8. PR — Create pull request
+9. Merge — Auto-merge
+10. Deploy — Create deployment
+11. Validate — Health check
+12. Monitor — Track metrics
+
+## How to Work
+
+1. When given a goal or issue, start a pipeline with shipwright_pipeline_start
+2. For each stage, do the work (read files, write code, run tests) then report outcome with shipwright_stage_advance
+3. If a test fails, search memory with shipwright_memory_search for similar past failures
+4. Record new failure patterns with shipwright_memory_store so future runs learn
+5. Use shipwright_intelligence for DORA metrics and optimization suggestions
+
+## Self-Healing Build Loop
+
+When tests fail in the Build stage:
+1. Search memory for similar failures
+2. Apply known fixes
+3. Re-run tests
+4. If still failing after 3 iterations, advance with failure and escalate
+
+Always record successful fixes in memory for future reference.
+"""
+
+# --- Dashboard ---
+
+[dashboard]
+title = "Shipwright Pipeline"
+
+[[dashboard.metrics]]
+label = "Active Pipelines"
+memory_key = "shipwright_active_pipelines"
+format = "number"
+
+[[dashboard.metrics]]
+label = "Stages Completed"
+memory_key = "shipwright_stages_completed"
+format = "number"
+
+[[dashboard.metrics]]
+label = "Success Rate"
+memory_key = "shipwright_success_rate"
+format = "percentage"
+
+[[dashboard.metrics]]
+label = "Failure Patterns"
+memory_key = "shipwright_failure_patterns"
+format = "number"
