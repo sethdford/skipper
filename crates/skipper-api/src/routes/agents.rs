@@ -1560,3 +1560,93 @@ pub async fn serve_upload(Path(file_id): Path<String>) -> impl IntoResponse {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Request/Response types and shared constants
+// ---------------------------------------------------------------------------
+
+/// Request body for updating agent visual identity.
+#[derive(serde::Deserialize)]
+pub struct UpdateIdentityRequest {
+    pub emoji: Option<String>,
+    pub avatar_url: Option<String>,
+    pub color: Option<String>,
+    #[serde(default)]
+    pub archetype: Option<String>,
+    #[serde(default)]
+    pub vibe: Option<String>,
+    #[serde(default)]
+    pub greeting_style: Option<String>,
+}
+
+/// Request body for patching agent config (name, description, prompt, identity).
+#[derive(serde::Deserialize)]
+pub struct PatchAgentConfigRequest {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub system_prompt: Option<String>,
+    pub emoji: Option<String>,
+    pub avatar_url: Option<String>,
+    pub color: Option<String>,
+    pub archetype: Option<String>,
+    pub vibe: Option<String>,
+    pub greeting_style: Option<String>,
+}
+
+/// Request body for cloning an agent.
+#[derive(serde::Deserialize)]
+pub struct CloneAgentRequest {
+    pub new_name: String,
+}
+
+/// Request body for writing a workspace identity file.
+#[derive(serde::Deserialize)]
+pub struct SetAgentFileRequest {
+    pub content: String,
+}
+
+/// Response body for file uploads.
+#[derive(serde::Serialize)]
+struct UploadResponse {
+    file_id: String,
+    filename: String,
+    content_type: String,
+    size: usize,
+    /// Transcription text for audio uploads (populated via Whisper STT).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    transcription: Option<String>,
+}
+
+/// Metadata stored alongside uploaded files.
+struct UploadMeta {
+    #[allow(dead_code)]
+    filename: String,
+    content_type: String,
+}
+
+/// In-memory upload metadata registry.
+static UPLOAD_REGISTRY: std::sync::LazyLock<dashmap::DashMap<String, UploadMeta>> =
+    std::sync::LazyLock::new(dashmap::DashMap::new);
+
+/// Maximum upload size: 10 MB.
+const MAX_UPLOAD_SIZE: usize = 10 * 1024 * 1024;
+
+/// Allowed content type prefixes for upload.
+const ALLOWED_CONTENT_TYPES: &[&str] = &["image/", "text/", "application/pdf", "audio/"];
+
+fn is_allowed_content_type(ct: &str) -> bool {
+    ALLOWED_CONTENT_TYPES
+        .iter()
+        .any(|prefix| ct.starts_with(prefix))
+}
+
+/// Whitelisted workspace identity files that can be read/written via API.
+const KNOWN_IDENTITY_FILES: &[&str] = &[
+    "SOUL.md",
+    "IDENTITY.md",
+    "USER.md",
+    "TOOLS.md",
+    "MEMORY.md",
+    "AGENTS.md",
+    "BOOTSTRAP.md",
+    "HEARTBEAT.md",
+];
