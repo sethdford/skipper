@@ -298,31 +298,9 @@ enum VaultCommands {
     },
 }
 
-#[derive(Clone, clap::ValueEnum)]
-enum ScaffoldKind {
-    Skill,
-    Integration,
-}
-
-#[derive(clap::Args)]
-struct MigrateArgs {
-    /// Source framework to migrate from.
-    #[arg(long, value_enum)]
-    from: MigrateSourceArg,
-    /// Path to the source workspace (auto-detected if not set).
-    #[arg(long)]
-    source_dir: Option<PathBuf>,
-    /// Dry run — show what would be imported without making changes.
-    #[arg(long)]
-    dry_run: bool,
-}
-
-#[derive(Clone, clap::ValueEnum)]
-enum MigrateSourceArg {
-    Openclaw,
-    Langchain,
-    Autogpt,
-}
+// Use ScaffoldKind and MigrateArgs from commands module
+use commands::scaffold::ScaffoldKind;
+use commands::migrate::{MigrateArgs, MigrateSourceArg};
 
 #[derive(Subcommand)]
 enum SkillCommands {
@@ -783,8 +761,8 @@ fn main() {
             }
             match launcher::run(cli.config.clone()) {
                 launcher::LauncherChoice::GetStarted => commands::cmd_init(false),
-                launcher::LauncherChoice::Chat => cmd_quick_chat(cli.config, None),
-                launcher::LauncherChoice::Dashboard => cmd_dashboard(),
+                launcher::LauncherChoice::Chat => commands::cmd_quick_chat(cli.config, None),
+                launcher::LauncherChoice::Dashboard => commands::cmd_dashboard(),
                 launcher::LauncherChoice::DesktopApp => launcher::launch_desktop_app(),
                 launcher::LauncherChoice::TerminalUI => tui::run(cli.config),
                 launcher::LauncherChoice::ShowHelp => {
@@ -821,7 +799,7 @@ fn main() {
             } => commands::cmd_trigger_create(&agent_id, &pattern_json, &prompt, max_fires),
             TriggerCommands::Delete { trigger_id } => commands::cmd_trigger_delete(&trigger_id),
         },
-        Some(Commands::Migrate(args)) => cmd_migrate(args),
+        Some(Commands::Migrate(args)) => commands::cmd_migrate(args),
         Some(Commands::Skill(sub)) => match sub {
             SkillCommands::Install { source } => commands::cmd_skill_install(&source),
             SkillCommands::List => commands::cmd_skill_list(),
@@ -846,28 +824,28 @@ fn main() {
             ConfigCommands::DeleteKey { provider } => commands::cmd_config_delete_key(&provider),
             ConfigCommands::TestKey { provider } => commands::cmd_config_test_key(&provider),
         },
-        Some(Commands::Chat { agent }) => cmd_quick_chat(cli.config, agent),
+        Some(Commands::Chat { agent }) => commands::cmd_quick_chat(cli.config, agent),
         Some(Commands::Status { json }) => commands::cmd_status(cli.config, json),
         Some(Commands::Doctor { json, repair }) => commands::cmd_doctor(json, repair),
-        Some(Commands::Dashboard) => cmd_dashboard(),
-        Some(Commands::Completion { shell }) => cmd_completion(shell),
+        Some(Commands::Dashboard) => commands::cmd_dashboard(),
+        Some(Commands::Completion { shell }) => commands::cmd_completion(shell),
         Some(Commands::Mcp) => mcp::run_mcp_server(cli.config),
-        Some(Commands::Add { name, key }) => cmd_integration_add(&name, key.as_deref()),
-        Some(Commands::Remove { name }) => cmd_integration_remove(&name),
-        Some(Commands::Integrations { query }) => cmd_integrations_list(query.as_deref()),
+        Some(Commands::Add { name, key }) => commands::cmd_integration_add(&name, key.as_deref()),
+        Some(Commands::Remove { name }) => commands::cmd_integration_remove(&name),
+        Some(Commands::Integrations { query }) => commands::cmd_integrations_list(query.as_deref()),
         Some(Commands::Vault(sub)) => match sub {
-            VaultCommands::Init => cmd_vault_init(),
-            VaultCommands::Set { key } => cmd_vault_set(&key),
-            VaultCommands::List => cmd_vault_list(),
-            VaultCommands::Remove { key } => cmd_vault_remove(&key),
+            VaultCommands::Init => commands::cmd_vault_init(),
+            VaultCommands::Set { key } => commands::cmd_vault_set(&key),
+            VaultCommands::List => commands::cmd_vault_list(),
+            VaultCommands::Remove { key } => commands::cmd_vault_remove(&key),
         },
-        Some(Commands::New { kind }) => cmd_scaffold(kind),
+        Some(Commands::New { kind }) => commands::cmd_scaffold(kind),
         // ── New commands ────────────────────────────────────────────────
         Some(Commands::Models(sub)) => match sub {
-            ModelsCommands::List { provider, json } => cmd_models_list(provider.as_deref(), json),
-            ModelsCommands::Aliases { json } => cmd_models_aliases(json),
-            ModelsCommands::Providers { json } => cmd_models_providers(json),
-            ModelsCommands::Set { model } => cmd_models_set(model),
+            ModelsCommands::List { provider, json } => commands::cmd_models_list(provider.as_deref(), json),
+            ModelsCommands::Aliases { json } => commands::cmd_models_aliases(json),
+            ModelsCommands::Providers { json } => commands::cmd_models_providers(json),
+            ModelsCommands::Set { model } => commands::cmd_models_set(model),
         },
         Some(Commands::Gateway(sub)) => match sub {
             GatewayCommands::Start => commands::cmd_start(cli.config),
@@ -875,55 +853,55 @@ fn main() {
             GatewayCommands::Status { json } => commands::cmd_status(cli.config, json),
         },
         Some(Commands::Approvals(sub)) => match sub {
-            ApprovalsCommands::List { json } => cmd_approvals_list(json),
-            ApprovalsCommands::Approve { id } => cmd_approvals_respond(&id, true),
-            ApprovalsCommands::Reject { id } => cmd_approvals_respond(&id, false),
+            ApprovalsCommands::List { json } => commands::cmd_approvals_list(json),
+            ApprovalsCommands::Approve { id } => commands::cmd_approvals_respond(&id, true),
+            ApprovalsCommands::Reject { id } => commands::cmd_approvals_respond(&id, false),
         },
         Some(Commands::Cron(sub)) => match sub {
-            CronCommands::List { json } => cmd_cron_list(json),
+            CronCommands::List { json } => commands::cmd_cron_list(json),
             CronCommands::Create {
                 agent,
                 spec,
                 prompt,
-            } => cmd_cron_create(&agent, &spec, &prompt),
-            CronCommands::Delete { id } => cmd_cron_delete(&id),
-            CronCommands::Enable { id } => cmd_cron_toggle(&id, true),
-            CronCommands::Disable { id } => cmd_cron_toggle(&id, false),
+            } => commands::cmd_cron_create(&agent, &spec, &prompt),
+            CronCommands::Delete { id } => commands::cmd_cron_delete(&id),
+            CronCommands::Enable { id } => commands::cmd_cron_toggle(&id, true),
+            CronCommands::Disable { id } => commands::cmd_cron_toggle(&id, false),
         },
-        Some(Commands::Sessions { agent, json }) => cmd_sessions(agent.as_deref(), json),
-        Some(Commands::Logs { lines, follow }) => cmd_logs(lines, follow),
-        Some(Commands::Health { json }) => cmd_health(json),
+        Some(Commands::Sessions { agent, json }) => commands::cmd_sessions(agent.as_deref(), json),
+        Some(Commands::Logs { lines, follow }) => commands::cmd_logs(lines, follow),
+        Some(Commands::Health { json }) => commands::cmd_health(json),
         Some(Commands::Security(sub)) => match sub {
-            SecurityCommands::Status { json } => cmd_security_status(json),
-            SecurityCommands::Audit { limit, json } => cmd_security_audit(limit, json),
-            SecurityCommands::Verify => cmd_security_verify(),
+            SecurityCommands::Status { json } => commands::cmd_security_status(json),
+            SecurityCommands::Audit { limit, json } => commands::cmd_security_audit(limit, json),
+            SecurityCommands::Verify => commands::cmd_security_verify(),
         },
         Some(Commands::Memory(sub)) => match sub {
-            MemoryCommands::List { agent, json } => cmd_memory_list(&agent, json),
-            MemoryCommands::Get { agent, key, json } => cmd_memory_get(&agent, &key, json),
-            MemoryCommands::Set { agent, key, value } => cmd_memory_set(&agent, &key, &value),
-            MemoryCommands::Delete { agent, key } => cmd_memory_delete(&agent, &key),
+            MemoryCommands::List { agent, json } => commands::cmd_memory_list(&agent, json),
+            MemoryCommands::Get { agent, key, json } => commands::cmd_memory_get(&agent, &key, json),
+            MemoryCommands::Set { agent, key, value } => commands::cmd_memory_set(&agent, &key, &value),
+            MemoryCommands::Delete { agent, key } => commands::cmd_memory_delete(&agent, &key),
         },
         Some(Commands::Devices(sub)) => match sub {
-            DevicesCommands::List { json } => cmd_devices_list(json),
-            DevicesCommands::Pair => cmd_devices_pair(),
-            DevicesCommands::Remove { id } => cmd_devices_remove(&id),
+            DevicesCommands::List { json } => commands::cmd_devices_list(json),
+            DevicesCommands::Pair => commands::cmd_devices_pair(),
+            DevicesCommands::Remove { id } => commands::cmd_devices_remove(&id),
         },
-        Some(Commands::Qr) => cmd_devices_pair(),
+        Some(Commands::Qr) => commands::cmd_devices_pair(),
         Some(Commands::Webhooks(sub)) => match sub {
-            WebhooksCommands::List { json } => cmd_webhooks_list(json),
-            WebhooksCommands::Create { agent, url } => cmd_webhooks_create(&agent, &url),
-            WebhooksCommands::Delete { id } => cmd_webhooks_delete(&id),
-            WebhooksCommands::Test { id } => cmd_webhooks_test(&id),
+            WebhooksCommands::List { json } => commands::cmd_webhooks_list(json),
+            WebhooksCommands::Create { agent, url } => commands::cmd_webhooks_create(&agent, &url),
+            WebhooksCommands::Delete { id } => commands::cmd_webhooks_delete(&id),
+            WebhooksCommands::Test { id } => commands::cmd_webhooks_test(&id),
         },
         Some(Commands::Onboard { quick }) | Some(Commands::Setup { quick }) => commands::cmd_init(quick),
         Some(Commands::Configure) => commands::cmd_init(false),
-        Some(Commands::Message { agent, text, json }) => cmd_message(&agent, &text, json),
+        Some(Commands::Message { agent, text, json }) => commands::cmd_message(&agent, &text, json),
         Some(Commands::System(sub)) => match sub {
-            SystemCommands::Info { json } => cmd_system_info(json),
-            SystemCommands::Version { json } => cmd_system_version(json),
+            SystemCommands::Info { json } => commands::cmd_system_info(json),
+            SystemCommands::Version { json } => commands::cmd_system_version(json),
         },
-        Some(Commands::Reset { confirm }) => cmd_reset(confirm),
+        Some(Commands::Reset { confirm }) => commands::cmd_reset(confirm),
     }
 }
 
