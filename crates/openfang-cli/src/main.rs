@@ -1206,6 +1206,18 @@ fn detect_best_provider() -> (&'static str, &'static str, &'static str) {
         ui::success("Detected Gemini (GOOGLE_API_KEY)");
         return ("gemini", "GOOGLE_API_KEY", "gemini-2.5-flash");
     }
+    // Check CLAUDE_CODE_OAUTH_TOKEN with Claude Code CLI
+    if std::env::var("CLAUDE_CODE_OAUTH_TOKEN").is_ok()
+        && openfang_runtime::drivers::claude_code::claude_code_available()
+    {
+        ui::success("Detected Claude Code (CLAUDE_CODE_OAUTH_TOKEN)");
+        return ("claude-code", "CLAUDE_CODE_OAUTH_TOKEN", "claude-code/sonnet");
+    }
+    // Check if Claude Code CLI is available (uses OAuth token internally)
+    if openfang_runtime::drivers::claude_code::claude_code_available() {
+        ui::success("Detected Claude Code CLI (uses your Claude subscription)");
+        return ("claude-code", "", "claude-code/sonnet");
+    }
     ui::hint("No LLM provider API keys found");
     ui::hint("Groq offers a free tier: https://console.groq.com");
     ("groq", "GROQ_API_KEY", "llama-3.3-70b-versatile")
