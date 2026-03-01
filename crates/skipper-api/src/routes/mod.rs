@@ -58,6 +58,9 @@ pub use misc::*;
 mod pipelines;
 pub use pipelines::*;
 
+mod mcp;
+pub use mcp::*;
+
 /// Shared application state.
 ///
 /// The kernel is wrapped in Arc so it can serve as both the main kernel

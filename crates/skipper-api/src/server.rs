@@ -640,6 +640,10 @@ pub async fn build_router(
             axum::routing::post(routes::advance_pipeline),
         )
         .route("/api/fleet/status", axum::routing::get(routes::get_fleet_status))
+        .route(
+            "/mcp",
+            axum::routing::post(routes::mcp_handler),
+        )
         .layer(axum::middleware::from_fn_with_state(
             api_key,
             middleware::auth,
