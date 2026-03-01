@@ -5646,6 +5646,7 @@ dependencies = [
  "skipper-memory",
  "skipper-migrate",
  "skipper-runtime",
+ "skipper-shipwright",
  "skipper-skills",
  "skipper-types",
  "skipper-wire",

@@ -49,6 +49,7 @@ pub async fn build_router(
         bridge_manager: tokio::sync::Mutex::new(bridge),
         channels_config: tokio::sync::RwLock::new(channels_config),
         shutdown_notify: Arc::new(tokio::sync::Notify::new()),
+        shipwright: Arc::new(skipper_shipwright::tools::ShipwrightState::new()),
     });
 
     // CORS: allow localhost origins by default. If API key is set, the API
@@ -625,6 +626,20 @@ pub async fn build_router(
             "/v1/models",
             axum::routing::get(crate::openai_compat::list_models),
         )
+        // Pipeline and fleet orchestration endpoints
+        .route(
+            "/api/pipelines/start",
+            axum::routing::post(routes::start_pipeline),
+        )
+        .route(
+            "/api/pipelines/:id/status",
+            axum::routing::get(routes::get_pipeline_status),
+        )
+        .route(
+            "/api/pipelines/:id/advance",
+            axum::routing::post(routes::advance_pipeline),
+        )
+        .route("/api/fleet/status", axum::routing::get(routes::get_fleet_status))
         .layer(axum::middleware::from_fn_with_state(
             api_key,
             middleware::auth,

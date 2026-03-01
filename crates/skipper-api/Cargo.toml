@@ -16,6 +16,7 @@ skipper-skills = { path = "../skipper-skills" }
 skipper-hands = { path = "../skipper-hands" }
 skipper-extensions = { path = "../skipper-extensions" }
 skipper-migrate = { path = "../skipper-migrate" }
+skipper-shipwright = { path = "../skipper-shipwright" }
 dashmap = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }

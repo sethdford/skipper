@@ -13,6 +13,7 @@ use skipper_kernel::workflow::{
 use skipper_kernel::SkipperKernel;
 use skipper_runtime::kernel_handle::KernelHandle;
 use skipper_runtime::tool_runner::builtin_tool_definitions;
+use skipper_shipwright::tools::ShipwrightState;
 use skipper_types::agent::{AgentId, AgentIdentity, AgentManifest};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -54,6 +55,9 @@ pub use integrations::*;
 mod misc;
 pub use misc::*;
 
+mod pipelines;
+pub use pipelines::*;
+
 /// Shared application state.
 ///
 /// The kernel is wrapped in Arc so it can serve as both the main kernel
@@ -69,6 +73,8 @@ pub struct AppState {
     pub channels_config: tokio::sync::RwLock<skipper_types::config::ChannelsConfig>,
     /// Notify handle to trigger graceful HTTP server shutdown from the API.
     pub shutdown_notify: Arc<tokio::sync::Notify>,
+    /// Shipwright state for pipeline and fleet operations.
+    pub shipwright: Arc<ShipwrightState>,
 }
 
 // ---------------------------------------------------------------------------
