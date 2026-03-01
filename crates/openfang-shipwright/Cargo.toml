@@ -29,5 +29,5 @@ tower = { workspace = true }
 tower-http = { workspace = true, features = ["cors", "trace"] }
 
 [dev-dependencies]
-tokio = { workspace = true, features = ["test-util", "macros"] }
+tokio = { workspace = true, features = ["test-util", "macros", "rt-multi-thread"] }
 tempfile = { workspace = true }
