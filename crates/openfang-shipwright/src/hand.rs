@@ -74,7 +74,7 @@ mod tests {
     fn test_hand_toml_embedded() {
         let hand = HandDefinition::shipwright();
         let toml = hand.hand_toml();
-        assert!(toml.len() > 0);
+        assert!(!toml.is_empty());
         assert!(toml.contains("id = \"shipwright\""));
         assert!(toml.contains("pipeline_template"));
         assert!(toml.contains("auto_merge"));
@@ -84,7 +84,7 @@ mod tests {
     fn test_skill_md_embedded() {
         let hand = HandDefinition::shipwright();
         let skill = hand.skill_md();
-        assert!(skill.len() > 0);
+        assert!(!skill.is_empty());
         assert!(skill.contains("Pipeline Architecture"));
         assert!(skill.contains("Build Loop Patterns"));
         assert!(skill.contains("DORA Metrics"));
@@ -94,7 +94,7 @@ mod tests {
     fn test_system_prompt_embedded() {
         let hand = HandDefinition::shipwright();
         let prompt = hand.system_prompt_md();
-        assert!(prompt.len() > 0);
+        assert!(!prompt.is_empty());
         assert!(prompt.contains("Phase 0"));
         assert!(prompt.contains("Platform Detection"));
         assert!(prompt.contains("Issue Analysis"));

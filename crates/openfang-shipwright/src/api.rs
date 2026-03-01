@@ -4,7 +4,7 @@
 //! fleet status, DORA metrics, and memory system.
 
 use axum::{
-    extract::Path,
+    extract::{Path, Query},
     http::StatusCode,
     response::IntoResponse,
     routing::{get, post},
@@ -17,6 +17,14 @@ use serde::{Deserialize, Serialize};
 pub struct ApiResponse<T> {
     pub data: T,
     pub status: String,
+}
+
+/// Memory search query parameters
+#[derive(Debug, Deserialize)]
+pub struct MemorySearchQuery {
+    pub q: Option<String>,
+    pub repo: Option<String>,
+    pub limit: Option<usize>,
 }
 
 /// Pipeline execution status
@@ -62,6 +70,7 @@ where
         .route("/decide/run", post(run_decision))
         .route("/decide/candidates", get(list_candidates))
         .route("/dora/:repo", get(get_dora_metrics))
+        .route("/memory/search", get(search_memory))
 }
 
 async fn list_pipelines() -> impl IntoResponse {
@@ -155,6 +164,25 @@ async fn get_dora_metrics(Path(_repo): Path<String>) -> impl IntoResponse {
     Json(ApiResponse {
         data: metrics,
         status: "ok".into(),
+    })
+}
+
+async fn search_memory(Query(params): Query<MemorySearchQuery>) -> impl IntoResponse {
+    // In a real implementation, this would query the memory store
+    // For now, return matching failure patterns based on query params
+    use crate::memory::FailurePattern;
+
+    let _query_text = params.q.unwrap_or_default();
+    let _repo = params.repo.unwrap_or_else(|| "default".to_string());
+    let _limit = params.limit.unwrap_or(10);
+
+    // Mock response with empty results (would be populated from actual memory)
+    let patterns: Vec<FailurePattern> = vec![];
+    let has_matches = !patterns.is_empty();
+
+    Json(ApiResponse {
+        data: patterns,
+        status: if has_matches { "ok" } else { "no_matches" }.into(),
     })
 }
 

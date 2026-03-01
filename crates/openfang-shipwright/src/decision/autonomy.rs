@@ -259,16 +259,20 @@ mod tests {
 
     #[test]
     fn test_check_rate_limit_allows() {
-        let mut state = DecisionState::default();
-        state.last_decision_time = Some(now_timestamp() - 500);
+        let state = DecisionState {
+            last_decision_time: Some(now_timestamp() - 500),
+            ..Default::default()
+        };
         let limits = DecisionLimits::default();
         assert!(state.check_rate_limit(&limits));
     }
 
     #[test]
     fn test_check_rate_limit_denies() {
-        let mut state = DecisionState::default();
-        state.last_decision_time = Some(now_timestamp() - 100);
+        let state = DecisionState {
+            last_decision_time: Some(now_timestamp() - 100),
+            ..Default::default()
+        };
         let limits = DecisionLimits::default();
         assert!(!state.check_rate_limit(&limits));
     }

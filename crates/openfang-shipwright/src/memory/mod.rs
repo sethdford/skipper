@@ -8,29 +8,32 @@ pub use architecture::ArchitectureRule;
 pub use learning::{Outcome, ScoringWeights, ABTest, ABGroup};
 pub use patterns::FailurePattern;
 use crate::decision::signals::SignalType;
+use std::sync::RwLock;
 
 /// Shipwright memory store.
 pub struct ShipwrightMemory {
     // In a real implementation, this would wrap openfang_memory::MemoryStore
-    // For now, we use in-memory collections for testing
-    failure_patterns: Vec<FailurePattern>,
-    architecture_rules: Vec<ArchitectureRule>,
-    outcomes: Vec<Outcome>,
+    // For now, we use in-memory collections with RwLock for thread-safety
+    failure_patterns: RwLock<Vec<FailurePattern>>,
+    architecture_rules: RwLock<Vec<ArchitectureRule>>,
+    outcomes: RwLock<Vec<Outcome>>,
 }
 
 impl ShipwrightMemory {
     /// Create a new memory store.
     pub fn new() -> Self {
         Self {
-            failure_patterns: vec![],
-            architecture_rules: vec![],
-            outcomes: vec![],
+            failure_patterns: RwLock::new(vec![]),
+            architecture_rules: RwLock::new(vec![]),
+            outcomes: RwLock::new(vec![]),
         }
     }
 
     /// Store a failure pattern.
-    pub fn store_failure(&mut self, pattern: FailurePattern) {
-        self.failure_patterns.push(pattern);
+    pub fn store_failure(&self, pattern: FailurePattern) {
+        if let Ok(mut patterns) = self.failure_patterns.write() {
+            patterns.push(pattern);
+        }
     }
 
     /// Search for similar failures by error text.
@@ -40,12 +43,16 @@ impl ShipwrightMemory {
         repo: &str,
         limit: usize,
     ) -> Vec<FailurePattern> {
-        self.failure_patterns
-            .iter()
-            .filter(|p| p.repo == repo && p.error_signature.to_lowercase().contains(&error_text.to_lowercase()))
-            .take(limit)
-            .cloned()
-            .collect()
+        if let Ok(patterns) = self.failure_patterns.read() {
+            patterns
+                .iter()
+                .filter(|p| p.repo == repo && p.error_signature.to_lowercase().contains(&error_text.to_lowercase()))
+                .take(limit)
+                .cloned()
+                .collect()
+        } else {
+            vec![]
+        }
     }
 
     /// Compose context from similar failures.
@@ -66,13 +73,19 @@ impl ShipwrightMemory {
     }
 
     /// Store an architecture rule.
-    pub fn store_architecture(&mut self, rule: ArchitectureRule) {
-        self.architecture_rules.push(rule);
+    pub fn store_architecture(&self, rule: ArchitectureRule) {
+        if let Ok(mut rules) = self.architecture_rules.write() {
+            rules.push(rule);
+        }
     }
 
     /// Get architecture rule for a repo.
     pub fn get_architecture(&self, repo: &str) -> Option<ArchitectureRule> {
-        self.architecture_rules.iter().find(|r| r.repo == repo).cloned()
+        if let Ok(rules) = self.architecture_rules.read() {
+            rules.iter().find(|r| r.repo == repo).cloned()
+        } else {
+            None
+        }
     }
 
     /// Check for dependency violation.
@@ -94,17 +107,23 @@ impl ShipwrightMemory {
     }
 
     /// Record an outcome.
-    pub fn record_outcome(&mut self, outcome: Outcome) {
-        self.outcomes.push(outcome);
+    pub fn record_outcome(&self, outcome: Outcome) {
+        if let Ok(mut outcomes) = self.outcomes.write() {
+            outcomes.push(outcome);
+        }
     }
 
     /// Get outcomes for a signal source.
     pub fn get_outcomes_for_signal(&self, signal_source: SignalType) -> Vec<Outcome> {
-        self.outcomes
-            .iter()
-            .filter(|o| o.signal_source == signal_source)
-            .cloned()
-            .collect()
+        if let Ok(outcomes) = self.outcomes.read() {
+            outcomes
+                .iter()
+                .filter(|o| o.signal_source == signal_source)
+                .cloned()
+                .collect()
+        } else {
+            vec![]
+        }
     }
 }
 
@@ -121,7 +140,7 @@ mod tests {
     #[test]
     fn test_memory_store_failure() {
         use crate::pipeline::Stage;
-        let mut memory = ShipwrightMemory::new();
+        let memory = ShipwrightMemory::new();
         let pattern = FailurePattern::with_stage(
             "repo".to_string(),
             Stage::Build,
@@ -131,13 +150,14 @@ mod tests {
             "fix".to_string(),
         );
         memory.store_failure(pattern.clone());
-        assert_eq!(memory.failure_patterns.len(), 1);
+        let patterns = memory.failure_patterns.read().unwrap();
+        assert_eq!(patterns.len(), 1);
     }
 
     #[test]
     fn test_search_similar_failures() {
         use crate::pipeline::Stage;
-        let mut memory = ShipwrightMemory::new();
+        let memory = ShipwrightMemory::new();
         let pattern = FailurePattern::with_stage(
             "repo".to_string(),
             Stage::Build,
@@ -155,7 +175,7 @@ mod tests {
     #[test]
     fn test_compose_context() {
         use crate::pipeline::Stage;
-        let mut memory = ShipwrightMemory::new();
+        let memory = ShipwrightMemory::new();
         let pattern = FailurePattern::with_stage(
             "repo".to_string(),
             Stage::Build,
@@ -179,15 +199,16 @@ mod tests {
 
     #[test]
     fn test_store_architecture() {
-        let mut memory = ShipwrightMemory::new();
+        let memory = ShipwrightMemory::new();
         let rule = ArchitectureRule::new("repo".to_string());
         memory.store_architecture(rule);
-        assert_eq!(memory.architecture_rules.len(), 1);
+        let rules = memory.architecture_rules.read().unwrap();
+        assert_eq!(rules.len(), 1);
     }
 
     #[test]
     fn test_check_dependency_violation() {
-        let mut memory = ShipwrightMemory::new();
+        let memory = ShipwrightMemory::new();
         let rule = ArchitectureRule::new("repo".to_string()).with_dependency_rule(
             "api".to_string(),
             "db".to_string(),
@@ -200,7 +221,7 @@ mod tests {
 
     #[test]
     fn test_get_hotspots() {
-        let mut memory = ShipwrightMemory::new();
+        let memory = ShipwrightMemory::new();
         let mut rule = ArchitectureRule::new("repo".to_string());
         rule.add_hotspot("file1.rs".to_string(), 10);
         rule.add_hotspot("file2.rs".to_string(), 5);
@@ -213,15 +234,16 @@ mod tests {
 
     #[test]
     fn test_record_outcome() {
-        let mut memory = ShipwrightMemory::new();
+        let memory = ShipwrightMemory::new();
         let outcome = Outcome::new("cand-1".to_string(), 75.0, SignalType::Security);
         memory.record_outcome(outcome);
-        assert_eq!(memory.outcomes.len(), 1);
+        let outcomes = memory.outcomes.read().unwrap();
+        assert_eq!(outcomes.len(), 1);
     }
 
     #[test]
     fn test_get_outcomes_for_signal() {
-        let mut memory = ShipwrightMemory::new();
+        let memory = ShipwrightMemory::new();
         let outcome1 = Outcome::new("c1".to_string(), 75.0, SignalType::Security);
         let outcome2 = Outcome::new("c2".to_string(), 60.0, SignalType::Dependency);
         memory.record_outcome(outcome1);

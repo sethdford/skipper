@@ -85,3 +85,69 @@ fn pause_resume_cycle_preserves_iteration() {
     }
 }
 
+// Invalid state transition tests
+
+#[test]
+fn failed_advance_should_error() {
+    let state = PipelineState::Failed {
+        at_stage: Stage::Build,
+        error: "Build failed".to_string(),
+        retries: 0,
+    };
+    let stages = vec![Stage::Build, Stage::Test];
+    assert!(state.advance_with_stages(&stages).is_err());
+}
+
+#[test]
+fn completed_fail_should_error() {
+    let state = PipelineState::Completed {
+        pr_url: Some("https://github.com/...".to_string()),
+    };
+    assert!(state.fail("Cannot fail completed pipeline".to_string()).is_err());
+}
+
+#[test]
+fn failed_pause_should_error() {
+    let state = PipelineState::Failed {
+        at_stage: Stage::Test,
+        error: "Test failed".to_string(),
+        retries: 1,
+    };
+    assert!(state.pause("Cannot pause failed pipeline".to_string()).is_err());
+}
+
+#[test]
+fn completed_pause_should_error() {
+    let state = PipelineState::Completed {
+        pr_url: Some("https://github.com/...".to_string()),
+    };
+    assert!(state.pause("Cannot pause completed pipeline".to_string()).is_err());
+}
+
+#[test]
+fn running_resume_should_error() {
+    let state = PipelineState::Running {
+        current_stage: Stage::Build,
+        iteration: 5,
+    };
+    assert!(state.resume().is_err());
+}
+
+#[test]
+fn completed_resume_should_error() {
+    let state = PipelineState::Completed {
+        pr_url: Some("https://github.com/...".to_string()),
+    };
+    assert!(state.resume().is_err());
+}
+
+#[test]
+fn failed_resume_should_error() {
+    let state = PipelineState::Failed {
+        at_stage: Stage::Build,
+        error: "Build failed".to_string(),
+        retries: 0,
+    };
+    assert!(state.resume().is_err());
+}
+

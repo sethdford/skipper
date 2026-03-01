@@ -97,6 +97,7 @@ pub mod intelligence;
 pub mod memory;
 pub mod pipeline;
 pub mod fleet;
+pub mod tools;
 
 pub use config::ShipwrightConfig;
 pub use decision::DecisionEngine;

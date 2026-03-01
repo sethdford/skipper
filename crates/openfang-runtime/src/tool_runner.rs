@@ -374,6 +374,17 @@ pub async fn execute_tool(
         // Canvas / A2UI tool
         "canvas_present" => tool_canvas_present(input, workspace_root).await,
 
+        // Shipwright delivery pipeline tools
+        #[cfg(feature = "shipwright")]
+        name if name.starts_with("shipwright_") => {
+            use openfang_shipwright::tools as sw;
+            // Lazy-init shared state (single pipeline context per runtime)
+            use std::sync::OnceLock;
+            static SW_STATE: OnceLock<sw::ShipwrightState> = OnceLock::new();
+            let state = SW_STATE.get_or_init(sw::ShipwrightState::default);
+            sw::dispatch(name, input, state)
+        }
+
         other => {
             // Fallback 1: MCP tools (mcp_{server}_{tool} prefix)
             if mcp::is_mcp_tool(other) {
@@ -448,7 +459,7 @@ pub async fn execute_tool(
 
 /// Get definitions for all built-in tools.
 pub fn builtin_tool_definitions() -> Vec<ToolDefinition> {
-    vec![
+    let mut defs = vec![
         // --- Filesystem tools ---
         ToolDefinition {
             name: "file_read".to_string(),
@@ -1107,7 +1118,13 @@ pub fn builtin_tool_definitions() -> Vec<ToolDefinition> {
                 "required": ["html"]
             }),
         },
-    ]
+    ];
+
+    // Append Shipwright tools when the feature is enabled
+    #[cfg(feature = "shipwright")]
+    defs.extend(openfang_shipwright::tools::tool_definitions());
+
+    defs
 }
 
 // ---------------------------------------------------------------------------
