@@ -98,6 +98,9 @@ pub mod memory;
 pub mod pipeline;
 pub mod fleet;
 pub mod tools;
+pub mod subprocess;
+pub mod memory_bridge;
+pub mod fleet_bridge;
 
 pub use config::ShipwrightConfig;
 pub use decision::DecisionEngine;

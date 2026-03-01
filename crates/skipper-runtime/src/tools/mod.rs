@@ -391,7 +391,7 @@ pub async fn execute_tool(
             use std::sync::OnceLock;
             static SW_STATE: OnceLock<sw::ShipwrightState> = OnceLock::new();
             let state = SW_STATE.get_or_init(sw::ShipwrightState::default);
-            sw::dispatch(name, input, state)
+            sw::dispatch(name, input, state).await
         }
 
         other => {
