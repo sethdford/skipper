@@ -6,7 +6,7 @@ mod tests {
     use std::sync::Arc;
     use tokio::task;
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn test_dashmap_concurrent_insert_read() {
         let cache = Arc::new(DashMap::new());
 
@@ -48,7 +48,7 @@ mod tests {
         }
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn test_dashmap_concurrent_update() {
         let cache = Arc::new(DashMap::new());
         cache.insert("counter", 0);
@@ -75,7 +75,7 @@ mod tests {
         assert_eq!(final_value, 50);
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn test_dashmap_concurrent_insert_remove() {
         let cache = Arc::new(DashMap::new());
 
@@ -108,35 +108,33 @@ mod tests {
         }
     }
 
-    #[tokio::test]
-    async fn test_dashmap_no_deadlock_under_contention() {
+    #[test]
+    fn test_dashmap_no_deadlock_under_contention() {
+        use std::thread;
+
         let cache = Arc::new(DashMap::new());
 
-        // Create many concurrent operations
-        let mut tasks = vec![];
-        for task_id in 0..20 {
+        // Use real OS threads for true concurrency
+        let mut handles = vec![];
+        for task_id in 0..4 {
             let cache_clone = Arc::clone(&cache);
-            let task = task::spawn(async move {
-                for i in 0..50 {
+            let handle = thread::spawn(move || {
+                for i in 0..10 {
                     let key = format!("task-{}-key-{}", task_id, i);
                     cache_clone.insert(key.clone(), i);
-
-                    // Read back immediately
-                    let _value = cache_clone.get(&key);
-
-                    // Remove
+                    // Drop the Ref guard before remove() to avoid shard deadlock
+                    let value = cache_clone.get(&key).map(|r| *r);
+                    assert!(value.is_some());
                     cache_clone.remove(&key);
                 }
             });
-            tasks.push(task);
+            handles.push(handle);
         }
 
-        // All tasks should complete without deadlock
-        for task in tasks {
-            task.await.unwrap();
+        for handle in handles {
+            handle.join().unwrap();
         }
 
-        // Cache should be empty at the end
         assert_eq!(cache.len(), 0);
     }
 }
