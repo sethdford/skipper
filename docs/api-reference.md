@@ -1132,7 +1132,7 @@ Create a new skill from a template.
 
 ### GET /api/marketplace/search
 
-Search the FangHub marketplace for community skills.
+Search the SkipperHub marketplace for community skills.
 
 **Query Parameters:**
 - `q` (required): Search query string
@@ -2203,7 +2203,7 @@ The `Retry-After` header indicates the window duration in seconds.
 | POST | `/api/skills/install` | Install skill |
 | POST | `/api/skills/uninstall` | Uninstall skill |
 | POST | `/api/skills/create` | Create new skill |
-| GET | `/api/marketplace/search` | Search FangHub |
+| GET | `/api/marketplace/search` | Search SkipperHub |
 | **ClawHub** | | |
 | GET | `/api/clawhub/search` | Search ClawHub |
 | GET | `/api/clawhub/browse` | Browse ClawHub |

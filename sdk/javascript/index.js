@@ -3,7 +3,7 @@
  *
  * Usage:
  *   const { Skipper } = require("@skipper/sdk");
- *   const client = new Skipper("http://localhost:3000");
+ *   const client = new Skipper("http://localhost:4200");
  *
  *   const agent = await client.agents.create({ template: "assistant" });
  *   const reply = await client.agents.message(agent.id, "Hello!");
@@ -28,7 +28,7 @@ class SkipperError extends Error {
 
 class Skipper {
   /**
-   * @param {string} baseUrl - Skipper server URL (e.g. "http://localhost:3000")
+   * @param {string} baseUrl - Skipper server URL (e.g. "http://localhost:4200")
    * @param {object} [opts]
    * @param {Record<string, string>} [opts.headers] - Extra headers for every request
    */

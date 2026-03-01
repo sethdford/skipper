@@ -8,7 +8,7 @@
 const { Skipper } = require("../index");
 
 async function main() {
-  const client = new Skipper("http://localhost:3000");
+  const client = new Skipper("http://localhost:4200");
 
   // Create an agent
   const agent = await client.agents.create({ template: "assistant" });

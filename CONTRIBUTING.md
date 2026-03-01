@@ -132,7 +132,7 @@ Skipper is organized as a Cargo workspace with 14 crates:
 | `skipper-wire` | OFP (Skipper Protocol): TCP P2P networking with HMAC-SHA256 mutual authentication |
 | `skipper-cli` | Clap CLI with daemon auto-detect (HTTP mode vs. in-process fallback), MCP server |
 | `skipper-migrate` | Migration engine for importing from OpenClaw (and future frameworks) |
-| `skipper-skills` | Skill system: 60 bundled skills, FangHub marketplace, OpenClaw compatibility, prompt injection scanning |
+| `skipper-skills` | Skill system: 60 bundled skills, SkipperHub marketplace, OpenClaw compatibility, prompt injection scanning |
 | `skipper-desktop` | Tauri 2.0 native desktop app (WebView + system tray + single-instance + notifications) |
 | `xtask` | Build automation tasks |
 

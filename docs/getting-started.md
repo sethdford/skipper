@@ -20,18 +20,18 @@ This guide walks you through installing Skipper, configuring your first LLM prov
 
 Download the installer for your platform from the [latest release](https://github.com/sethdford/skipper/releases/latest):
 
-| Platform | File |
-|---|---|
-| Windows | `.msi` installer |
-| macOS | `.dmg` disk image |
-| Linux | `.AppImage` or `.deb` |
+| Platform | File                  |
+| -------- | --------------------- |
+| Windows  | `.msi` installer      |
+| macOS    | `.dmg` disk image     |
+| Linux    | `.AppImage` or `.deb` |
 
 The desktop app includes the full Skipper system with a native window, system tray, auto-updates, and OS notifications. Updates are installed automatically in the background.
 
 ### Option 2: Shell Installer (Linux / macOS)
 
 ```bash
-curl -sSf https://skipper.sh | sh
+curl -sSf https://skipper.sh/install | sh
 ```
 
 This downloads the latest CLI binary and installs it to `~/.skipper/bin/`.
@@ -284,6 +284,7 @@ Press Ctrl+C to stop.
 ```
 
 The daemon provides:
+
 - **REST API** at `http://127.0.0.1:4200/api/`
 - **WebSocket** endpoint at `ws://127.0.0.1:4200/api/agents/{id}/ws`
 - **WebChat UI** at `http://127.0.0.1:4200/`
@@ -314,6 +315,7 @@ http://127.0.0.1:4200/
 ```
 
 The embedded WebChat UI allows you to:
+
 - View all running agents
 - Chat with any agent in real-time (via WebSocket)
 - See streaming responses as they are generated
@@ -361,7 +363,7 @@ skipper trigger delete <id>           # Delete a trigger
 
 skipper skill install <source>        # Install a skill
 skipper skill list                    # List installed skills
-skipper skill search <query>          # Search FangHub
+skipper skill search <query>          # Search SkipperHub
 skipper skill create                  # Scaffold a new skill
 
 skipper channel list                  # List channel status

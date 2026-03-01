@@ -1,6 +1,6 @@
 [Unit]
 Description=Skipper Agent OS Daemon
-Documentation=https://github.com/skipper-ai/skipper
+Documentation=https://github.com/sethdford/skipper
 After=network-online.target
 Wants=network-online.target
 

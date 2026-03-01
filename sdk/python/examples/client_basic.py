@@ -12,7 +12,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from skipper_client import Skipper
 
-client = Skipper("http://localhost:3000")
+client = Skipper("http://localhost:4200")
 
 # Check server health
 health = client.health()

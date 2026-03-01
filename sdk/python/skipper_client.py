@@ -5,7 +5,7 @@ Usage:
 
     from skipper_client import Skipper
 
-    client = Skipper("http://localhost:3000")
+    client = Skipper("http://localhost:4200")
 
     # Create an agent
     agent = client.agents.create(template="assistant")

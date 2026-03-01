@@ -178,15 +178,15 @@ function overviewPage() {
     },
 
     // ── Setup Checklist ──
-    checklistDismissed: localStorage.getItem('of-checklist-dismissed') === 'true',
+    checklistDismissed: localStorage.getItem('skipper-checklist-dismissed') === 'true',
 
     get setupChecklist() {
       return [
         { key: 'provider', label: 'Configure an LLM provider', done: this.configuredProviders.length > 0, action: '#settings' },
         { key: 'agent', label: 'Create your first agent', done: (Alpine.store('app').agents || []).length > 0, action: '#agents' },
-        { key: 'chat', label: 'Send your first message', done: localStorage.getItem('of-first-msg') === 'true', action: '#chat' },
+        { key: 'chat', label: 'Send your first message', done: localStorage.getItem('skipper-first-msg') === 'true', action: '#chat' },
         { key: 'channel', label: 'Connect a messaging channel', done: this.channels.length > 0, action: '#channels' },
-        { key: 'skill', label: 'Browse or install a skill', done: localStorage.getItem('of-skill-browsed') === 'true', action: '#skills' }
+        { key: 'skill', label: 'Browse or install a skill', done: localStorage.getItem('skipper-skill-browsed') === 'true', action: '#skills' }
       ];
     },
 
@@ -201,7 +201,7 @@ function overviewPage() {
 
     dismissChecklist() {
       this.checklistDismissed = true;
-      localStorage.setItem('of-checklist-dismissed', 'true');
+      localStorage.setItem('skipper-checklist-dismissed', 'true');
     },
 
     formatUptime(secs) {

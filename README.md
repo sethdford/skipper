@@ -104,7 +104,7 @@ skipper hand pause lead
 skipper hand list
 ```
 
-**Build your own.** Define a `HAND.toml` with tools, settings, and a system prompt. Publish to FangHub.
+**Build your own.** Define a `HAND.toml` with tools, settings, and a system prompt. Publish to SkipperHub.
 
 ---
 
@@ -239,7 +239,7 @@ skipper-api         140+ REST/WS/SSE endpoints, OpenAI-compatible API, dashboard
 skipper-channels    40 messaging adapters with rate limiting, DM/group policies
 skipper-memory      SQLite persistence, vector embeddings, canonical sessions, compaction
 skipper-types       Core types, taint tracking, Ed25519 manifest signing, model catalog
-skipper-skills      60 bundled skills, SKILL.md parser, FangHub marketplace
+skipper-skills      60 bundled skills, SKILL.md parser, SkipperHub marketplace
 skipper-hands       7 autonomous Hands, HAND.toml parser, lifecycle management
 skipper-extensions  25 MCP templates, AES-256-GCM credential vault, OAuth2 PKCE
 skipper-wire        OFP P2P protocol with HMAC-SHA256 mutual authentication

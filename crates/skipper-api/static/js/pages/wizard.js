@@ -185,7 +185,7 @@ function wizardPage() {
       try {
         var res = await SkipperAPI.post('/api/agents/' + this.createdAgent.id + '/message', { message: text });
         this.tryItMessages.push({ role: 'agent', text: res.response || '(no response)' });
-        localStorage.setItem('of-first-msg', 'true');
+        localStorage.setItem('skipper-first-msg', 'true');
       } catch(e) {
         this.tryItMessages.push({ role: 'agent', text: 'Error: ' + (e.message || 'Could not reach agent') });
       }

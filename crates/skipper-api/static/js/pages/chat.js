@@ -55,10 +55,10 @@ function chatPage() {
     tips: ['Type / for commands', '/think on for reasoning', 'Ctrl+Shift+F for focus mode', 'Drag files to attach', '/model to switch models', '/context to check usage', '/verbose off to hide tool details'],
     tipTimer: null,
     get currentTip() {
-      if (localStorage.getItem('of-tips-off') === 'true') return '';
+      if (localStorage.getItem('skipper-tips-off') === 'true') return '';
       return this.tips[this.tipIndex % this.tips.length];
     },
-    dismissTips: function() { localStorage.setItem('of-tips-off', 'true'); },
+    dismissTips: function() { localStorage.setItem('skipper-tips-off', 'true'); },
     startTipCycle: function() {
       var self = this;
       if (this.tipTimer) clearInterval(this.tipTimer);
@@ -344,7 +344,7 @@ function chatPage() {
       this.messages = [];
       this.connectWs(agent.id);
       // Show welcome tips on first use
-      if (!localStorage.getItem('of-chat-tips-seen')) {
+      if (!localStorage.getItem('skipper-chat-tips-seen')) {
         var localMsgId = 0;
         this.messages.push({
           id: ++localMsgId,
@@ -361,7 +361,7 @@ function chatPage() {
           meta: '',
           tools: []
         });
-        localStorage.setItem('of-chat-tips-seen', 'true');
+        localStorage.setItem('skipper-chat-tips-seen', 'true');
       }
       // Focus input after agent selection
       var self = this;
@@ -801,7 +801,7 @@ function chatPage() {
       // Always show user message immediately
       this.messages.push({ id: ++msgId, role: 'user', text: finalText, meta: '', tools: [], images: msgImages, ts: Date.now() });
       this.scrollToBottom();
-      localStorage.setItem('of-first-msg', 'true');
+      localStorage.setItem('skipper-first-msg', 'true');
 
       // If already streaming, queue this message
       if (this.sending) {

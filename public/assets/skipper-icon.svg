@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f0d060"/>
+      <stop offset="100%" stop-color="#c49a2a"/>
+    </linearGradient>
+  </defs>
+
+  <circle cx="128" cy="128" r="124" fill="#0d2240"/>
+
+  <circle cx="128" cy="128" r="88" fill="none" stroke="#3b7dc4" stroke-width="14"/>
+  <circle cx="128" cy="128" r="48" fill="none" stroke="#3b7dc4" stroke-width="4"/>
+
+  <g stroke="#3b7dc4" stroke-linecap="round" fill="#3b7dc4">
+    <line x1="128" y1="80" x2="128" y2="44" stroke-width="10"/>
+    <rect x="119" y="10" width="18" height="30" rx="9" stroke="none"/>
+
+    <g transform="rotate(45,128,128)">
+      <line x1="128" y1="80" x2="128" y2="44" stroke-width="10"/>
+      <rect x="119" y="10" width="18" height="30" rx="9" stroke="none"/>
+    </g>
+    <g transform="rotate(90,128,128)">
+      <line x1="128" y1="80" x2="128" y2="44" stroke-width="10"/>
+      <rect x="119" y="10" width="18" height="30" rx="9" stroke="none"/>
+    </g>
+    <g transform="rotate(135,128,128)">
+      <line x1="128" y1="80" x2="128" y2="44" stroke-width="10"/>
+      <rect x="119" y="10" width="18" height="30" rx="9" stroke="none"/>
+    </g>
+    <g transform="rotate(180,128,128)">
+      <line x1="128" y1="80" x2="128" y2="44" stroke-width="10"/>
+      <rect x="119" y="10" width="18" height="30" rx="9" stroke="none"/>
+    </g>
+    <g transform="rotate(225,128,128)">
+      <line x1="128" y1="80" x2="128" y2="44" stroke-width="10"/>
+      <rect x="119" y="10" width="18" height="30" rx="9" stroke="none"/>
+    </g>
+    <g transform="rotate(270,128,128)">
+      <line x1="128" y1="80" x2="128" y2="44" stroke-width="10"/>
+      <rect x="119" y="10" width="18" height="30" rx="9" stroke="none"/>
+    </g>
+    <g transform="rotate(315,128,128)">
+      <line x1="128" y1="80" x2="128" y2="44" stroke-width="10"/>
+      <rect x="119" y="10" width="18" height="30" rx="9" stroke="none"/>
+    </g>
+  </g>
+
+  <circle cx="128" cy="128" r="32" fill="#1a3f6b"/>
+
+  <text x="128" y="128" text-anchor="middle" dominant-baseline="central"
+        font-family="Georgia,Times New Roman,serif" font-size="42" font-weight="bold"
+        fill="url(#g)">S</text>
+</svg>

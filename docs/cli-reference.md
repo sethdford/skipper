@@ -35,7 +35,7 @@ docker run -it skipper/skipper:latest
 ### Shell installer
 
 ```bash
-curl -fsSL https://get.skipper.ai | sh
+curl -fsSL https://skipper.sh/install | sh
 ```
 
 ## Global Options
@@ -581,7 +581,7 @@ Loads skills from `~/.skipper/skills/` plus bundled skills compiled into the bin
 
 ### skipper skill install
 
-Install a skill from a local directory, git URL, or FangHub marketplace.
+Install a skill from a local directory, git URL, or SkipperHub marketplace.
 
 ```
 skipper skill install <SOURCE>
@@ -591,12 +591,12 @@ skipper skill install <SOURCE>
 
 | Argument | Description |
 |---|---|
-| `<SOURCE>` | Skill name (FangHub), local directory path, or git URL. |
+| `<SOURCE>` | Skill name (SkipperHub), local directory path, or git URL. |
 
 **Behavior:**
 
 - **Local directory:** Looks for `skill.toml` in the directory. If not found, checks for OpenClaw-format skills (SKILL.md with YAML frontmatter) and auto-converts them.
-- **Remote (FangHub):** Fetches and installs from the FangHub marketplace. Skills pass through SHA256 verification and prompt injection scanning.
+- **Remote (SkipperHub):** Fetches and installs from the SkipperHub marketplace. Skills pass through SHA256 verification and prompt injection scanning.
 
 **Example:**
 
@@ -604,7 +604,7 @@ skipper skill install <SOURCE>
 # Install from local directory
 skipper skill install ./my-skill/
 
-# Install from FangHub
+# Install from SkipperHub
 skipper skill install web-search
 
 # Install an OpenClaw-format skill
@@ -637,7 +637,7 @@ skipper skill remove web-search
 
 ### skipper skill search
 
-Search the FangHub marketplace for skills.
+Search the SkipperHub marketplace for skills.
 
 ```
 skipper skill search <QUERY>
@@ -1229,7 +1229,7 @@ skipper trigger delete <TRIGGER_ID>
 ### Skill management
 
 ```bash
-# Search FangHub
+# Search SkipperHub
 skipper skill search "code review"
 
 # Install a skill

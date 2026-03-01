@@ -101,7 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 60 bundled skills across 14 categories
 - Skill registry with TOML manifests
 - 4 runtimes: Python, Node.js, WASM, PromptOnly
-- FangHub marketplace with search/install
+- SkipperHub marketplace with search/install
 - ClawHub client for OpenClaw skill compatibility
 - SKILL.md parser with auto-conversion
 - SHA256 checksum verification

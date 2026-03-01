@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 320">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a1628"/>
+      <stop offset="100%" stop-color="#122442"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f0d060"/>
+      <stop offset="100%" stop-color="#c49a2a"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="320" rx="16" fill="url(#bgGrad)"/>
+
+  <g transform="translate(140,160)">
+    <circle r="72" fill="none" stroke="#3b7dc4" stroke-width="10"/>
+    <circle r="38" fill="none" stroke="#3b7dc4" stroke-width="3"/>
+    <circle r="22" fill="#1a3f6b"/>
+    <g stroke="#3b7dc4" fill="#3b7dc4" stroke-linecap="round">
+      <line x1="0" y1="-28" x2="0" y2="-62" stroke-width="8"/>
+      <rect x="-7" y="-96" width="14" height="26" rx="7" stroke="none"/>
+      <g transform="rotate(45)"><line x1="0" y1="-28" x2="0" y2="-62" stroke-width="8"/>
+        <rect x="-7" y="-96" width="14" height="26" rx="7" stroke="none"/></g>
+      <g transform="rotate(90)"><line x1="0" y1="-28" x2="0" y2="-62" stroke-width="8"/>
+        <rect x="-7" y="-96" width="14" height="26" rx="7" stroke="none"/></g>
+      <g transform="rotate(135)"><line x1="0" y1="-28" x2="0" y2="-62" stroke-width="8"/>
+        <rect x="-7" y="-96" width="14" height="26" rx="7" stroke="none"/></g>
+      <g transform="rotate(180)"><line x1="0" y1="-28" x2="0" y2="-62" stroke-width="8"/>
+        <rect x="-7" y="-96" width="14" height="26" rx="7" stroke="none"/></g>
+      <g transform="rotate(225)"><line x1="0" y1="-28" x2="0" y2="-62" stroke-width="8"/>
+        <rect x="-7" y="-96" width="14" height="26" rx="7" stroke="none"/></g>
+      <g transform="rotate(270)"><line x1="0" y1="-28" x2="0" y2="-62" stroke-width="8"/>
+        <rect x="-7" y="-96" width="14" height="26" rx="7" stroke="none"/></g>
+      <g transform="rotate(315)"><line x1="0" y1="-28" x2="0" y2="-62" stroke-width="8"/>
+        <rect x="-7" y="-96" width="14" height="26" rx="7" stroke="none"/></g>
+    </g>
+    <text y="8" text-anchor="middle" font-family="Georgia,serif" font-size="30" font-weight="bold" fill="url(#goldGrad)">S</text>
+  </g>
+
+  <text x="310" y="170" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="40" font-weight="900" fill="#3b7dc4" opacity="0.6">vs</text>
+
+  <g transform="translate(480,80)">
+    <rect x="0" y="0" width="280" height="48" rx="8" fill="#1a2944" stroke="#2a3f5f" stroke-width="1"/>
+    <circle cx="28" cy="24" r="14" fill="#333" stroke="#555" stroke-width="1"/>
+    <text x="28" y="29" text-anchor="middle" font-family="monospace" font-size="14" fill="#888">C1</text>
+    <text x="56" y="22" font-family="Arial,sans-serif" font-size="14" font-weight="600" fill="#aab4c8">OpenClaw</text>
+    <text x="56" y="38" font-family="monospace" font-size="11" fill="#667">5.98s cold start</text>
+    <text x="262" y="30" text-anchor="end" font-family="monospace" font-size="18" fill="#c44">slow</text>
+  </g>
+
+  <g transform="translate(480,144)">
+    <rect x="0" y="0" width="280" height="48" rx="8" fill="#1a2944" stroke="#2a3f5f" stroke-width="1"/>
+    <circle cx="28" cy="24" r="14" fill="#333" stroke="#555" stroke-width="1"/>
+    <text x="28" y="29" text-anchor="middle" font-family="monospace" font-size="14" fill="#888">C2</text>
+    <text x="56" y="22" font-family="Arial,sans-serif" font-size="14" font-weight="600" fill="#aab4c8">ZeroClaw</text>
+    <text x="56" y="38" font-family="monospace" font-size="11" fill="#667">10ms but limited</text>
+    <text x="262" y="30" text-anchor="end" font-family="monospace" font-size="18" fill="#da4">basic</text>
+  </g>
+
+  <g transform="translate(480,208)">
+    <rect x="0" y="0" width="280" height="48" rx="8" fill="#0d3b66" stroke="#3b7dc4" stroke-width="2"/>
+    <circle cx="28" cy="24" r="14" fill="#1a3f6b" stroke="#3b7dc4" stroke-width="2"/>
+    <text x="28" y="29" text-anchor="middle" font-family="Georgia,serif" font-size="14" font-weight="bold" fill="#f0d060">S</text>
+    <text x="56" y="22" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#f0d060">Skipper</text>
+    <text x="56" y="38" font-family="monospace" font-size="11" fill="#7db4e0">180ms + full OS</text>
+    <text x="262" y="30" text-anchor="end" font-family="monospace" font-size="18" fill="#5cb85c">best</text>
+  </g>
+
+  <text x="400" y="300" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#4a5d7a" font-style="italic">
+    One binary. 14 crates. 1,767+ tests. Agents that actually work.
+  </text>
+</svg>

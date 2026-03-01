@@ -1,4 +1,4 @@
-//! FangHub marketplace client — install skills from the registry.
+//! SkipperHub marketplace client — install skills from the registry.
 //!
 //! For Phase 1, uses GitHub releases as the registry backend.
 //! Each skill is a GitHub repo with releases containing the skill bundle.
@@ -7,7 +7,7 @@ use crate::SkillError;
 use std::path::Path;
 use tracing::info;
 
-/// FangHub registry configuration.
+/// SkipperHub registry configuration.
 #[derive(Debug, Clone)]
 pub struct MarketplaceConfig {
     /// Base URL for the registry API.
@@ -25,7 +25,7 @@ impl Default for MarketplaceConfig {
     }
 }
 
-/// Client for the FangHub marketplace.
+/// Client for the SkipperHub marketplace.
 pub struct MarketplaceClient {
     config: MarketplaceConfig,
     http: reqwest::Client,

@@ -39,7 +39,7 @@ skipper-kernel         Kernel: assembles all subsystems, workflow engine, RBAC, 
     +-- skipper-channels   40 channel adapters, bridge, formatter, rate limiter
     +-- skipper-wire       OFP peer-to-peer networking with HMAC-SHA256 auth
     +-- skipper-migrate    Migration engine (OpenClaw YAML->TOML)
-    +-- skipper-skills     60 bundled skills, FangHub marketplace, ClawHub client
+    +-- skipper-skills     60 bundled skills, SkipperHub marketplace, ClawHub client
     |
 skipper-memory         SQLite memory substrate, sessions, semantic search, usage tracking
     |
@@ -61,7 +61,7 @@ skipper-types          Shared types: Agent, Capability, Event, Memory, Message, 
 | **skipper-cli** | Clap-based CLI. Supports all commands: `init`, `start`, `status`, `doctor`, `agent spawn/list/chat/kill`, `workflow list/create/run`, `trigger list/create/delete`, `migrate`, `skill install/list/remove/search/create`, `channel list/setup/test/enable/disable`, `config show/edit`, `chat`, `mcp`. Daemon auto-detect: checks `~/.skipper/daemon.json` and health pings; uses HTTP when a daemon is running, boots an in-process kernel as fallback. Built-in MCP server mode. |
 | **skipper-desktop** | Tauri 2.0 native desktop application. Boots the kernel in-process, runs the axum server on a background thread, and points a WebView at `http://127.0.0.1:{random_port}`. Features: system tray (Show/Browser/Status/Quit), single-instance enforcement, desktop notifications, hide-to-tray on close. IPC commands: `get_port`, `get_status`. Mobile-ready with `#[cfg(desktop)]` guards. |
 | **skipper-migrate** | Migration engine. Supports OpenClaw (`~/.openclaw/`). Converts YAML configs to TOML, maps tool names, maps provider names, imports agent manifests, copies memory files, converts channel configs. Produces a `MigrationReport` with imported items, skipped items, and warnings. |
-| **skipper-skills** | Skill system for pluggable tool bundles. 60 bundled skills compiled via `include_str!()`. Skills are `skill.toml` + Python/WASM/Node.js/PromptOnly code. `SkillManifest` defines metadata, runtime config, provided tools, and requirements. `SkillRegistry` manages installed and bundled skills. `FangHubClient` connects to FangHub marketplace. `ClawHubClient` connects to clawhub.ai for cross-ecosystem skill discovery. `SKILL.md` parser for OpenClaw compatibility (YAML frontmatter + Markdown body). `SkillVerifier` with SHA256 verification. Prompt injection scanner (`scan_prompt_content()`) detects override attempts, data exfiltration, and shell references. |
+| **skipper-skills** | Skill system for pluggable tool bundles. 60 bundled skills compiled via `include_str!()`. Skills are `skill.toml` + Python/WASM/Node.js/PromptOnly code. `SkillManifest` defines metadata, runtime config, provided tools, and requirements. `SkillRegistry` manages installed and bundled skills. `SkipperHubClient` connects to SkipperHub marketplace. `ClawHubClient` connects to clawhub.ai for cross-ecosystem skill discovery. `SKILL.md` parser for OpenClaw compatibility (YAML frontmatter + Markdown body). `SkillVerifier` with SHA256 verification. Prompt injection scanner (`scan_prompt_content()`) detects override attempts, data exfiltration, and shell references. |
 | **xtask** | Build automation tasks (cargo-xtask pattern). |
 
 ---
@@ -635,7 +635,7 @@ All skills pass through a security pipeline before activation:
 
 ### Ecosystem Bridges
 
-- **FangHub**: Native Skipper marketplace (`FangHubClient`).
+- **SkipperHub**: Native Skipper marketplace (`SkipperHubClient`).
 - **ClawHub**: Cross-ecosystem compatibility (`ClawHubClient` connects to clawhub.ai).
 - **SKILL.md Parser**: Auto-converts OpenClaw SKILL.md format (YAML frontmatter + Markdown body) to `skill.toml`.
 - **Tool Compat**: 21 OpenClaw-to-Skipper tool name mappings in `tool_compat.rs`.
@@ -850,7 +850,7 @@ The desktop app (`skipper-desktop`) wraps the full Skipper stack in a native Tau
 | | +SessRepair|   |  | | Adapters ||  | |OFP | |  | |Skills | |
 | +------------+   |  | +----------+|  | |HMAC| |  | +-------+ |
 | +------------+   |  | +----------+|  | +----+ |  | +-------+ |
-| | 3 LLM Drv |   |  | |Formatter ||  | +----+ |  | |FangHub| |
+| | 3 LLM Drv |   |  | |Formatter ||  | +----+ |  | |SkipperHub| |
 | | (20 provs) |   |  | |Rate Lim ||  | |Peer| |  | |ClawHub| |
 | +------------+   |  | |DM/Group ||  | |Reg | |  | +-------+ |
 | +------------+   |  | +----------+|  | +----+ |  | +-------+ |

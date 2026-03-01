@@ -31,7 +31,7 @@ Send a message to a running agent:
 ```bash
 curl -X POST http://localhost:4200/api/agents/{id}/message \
   -H "Content-Type: application/json" \
-  -d '{"content": "Write unit tests for the auth module"}'
+  -d '{"message": "Write unit tests for the auth module"}'
 ```
 
 ---
@@ -44,10 +44,10 @@ Templates are organized into 4 tiers based on task complexity and the LLM models
 
 For tasks requiring the deepest reasoning: multi-agent orchestration, system architecture, and security analysis.
 
-| Template | Provider | Model |
-|----------|----------|-------|
-| orchestrator | deepseek | deepseek-chat |
-| architect | deepseek | deepseek-chat |
+| Template         | Provider | Model         |
+| ---------------- | -------- | ------------- |
+| orchestrator     | deepseek | deepseek-chat |
+| architect        | deepseek | deepseek-chat |
 | security-auditor | deepseek | deepseek-chat |
 
 All Tier 1 agents fall back to `groq/llama-3.3-70b-versatile` if the DeepSeek API key is unavailable.
@@ -56,16 +56,16 @@ All Tier 1 agents fall back to `groq/llama-3.3-70b-versatile` if the DeepSeek AP
 
 For tasks requiring strong analytical and coding abilities: software engineering, data science, research, testing, and legal review.
 
-| Template | Provider | Model |
-|----------|----------|-------|
-| coder | gemini | gemini-2.5-flash |
-| code-reviewer | gemini | gemini-2.5-flash |
-| data-scientist | gemini | gemini-2.5-flash |
-| debugger | gemini | gemini-2.5-flash |
-| researcher | gemini | gemini-2.5-flash |
-| analyst | gemini | gemini-2.5-flash |
-| test-engineer | gemini | gemini-2.5-flash |
-| legal-assistant | gemini | gemini-2.5-flash |
+| Template        | Provider | Model            |
+| --------------- | -------- | ---------------- |
+| coder           | gemini   | gemini-2.5-flash |
+| code-reviewer   | gemini   | gemini-2.5-flash |
+| data-scientist  | gemini   | gemini-2.5-flash |
+| debugger        | gemini   | gemini-2.5-flash |
+| researcher      | gemini   | gemini-2.5-flash |
+| analyst         | gemini   | gemini-2.5-flash |
+| test-engineer   | gemini   | gemini-2.5-flash |
+| legal-assistant | gemini   | gemini-2.5-flash |
 
 All Tier 2 agents fall back to `groq/llama-3.3-70b-versatile` if the Gemini API key is unavailable.
 
@@ -73,34 +73,34 @@ All Tier 2 agents fall back to `groq/llama-3.3-70b-versatile` if the Gemini API 
 
 For everyday business and productivity tasks: planning, writing, email, customer support, sales, recruiting, and meetings.
 
-| Template | Provider | Model | Fallback |
-|----------|----------|-------|----------|
-| planner | groq | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
-| writer | groq | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
-| doc-writer | groq | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
-| devops-lead | groq | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
-| assistant | groq | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
-| email-assistant | groq | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
-| social-media | groq | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
-| customer-support | groq | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
-| sales-assistant | groq | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
-| recruiter | groq | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
-| meeting-assistant | groq | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
+| Template          | Provider | Model                   | Fallback                |
+| ----------------- | -------- | ----------------------- | ----------------------- |
+| planner           | groq     | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
+| writer            | groq     | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
+| doc-writer        | groq     | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
+| devops-lead       | groq     | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
+| assistant         | groq     | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
+| email-assistant   | groq     | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
+| social-media      | groq     | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
+| customer-support  | groq     | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
+| sales-assistant   | groq     | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
+| recruiter         | groq     | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
+| meeting-assistant | groq     | llama-3.3-70b-versatile | gemini/gemini-2.0-flash |
 
 ### Tier 4 -- Fast (Groq Only)
 
 For lightweight, high-speed tasks: ops monitoring, translation, tutoring, wellness tracking, budgeting, travel, and home automation. No fallback model configured (except `ops` which uses a smaller 8B model for speed).
 
-| Template | Provider | Model |
-|----------|----------|-------|
-| ops | groq | llama-3.1-8b-instant |
-| hello-world | groq | llama-3.3-70b-versatile |
-| translator | groq | llama-3.3-70b-versatile |
-| tutor | groq | llama-3.3-70b-versatile |
-| health-tracker | groq | llama-3.3-70b-versatile |
-| personal-finance | groq | llama-3.3-70b-versatile |
-| travel-planner | groq | llama-3.3-70b-versatile |
-| home-automation | groq | llama-3.3-70b-versatile |
+| Template         | Provider | Model                   |
+| ---------------- | -------- | ----------------------- |
+| ops              | groq     | llama-3.1-8b-instant    |
+| hello-world      | groq     | llama-3.3-70b-versatile |
+| translator       | groq     | llama-3.3-70b-versatile |
+| tutor            | groq     | llama-3.3-70b-versatile |
+| health-tracker   | groq     | llama-3.3-70b-versatile |
+| personal-finance | groq     | llama-3.3-70b-versatile |
+| travel-planner   | groq     | llama-3.3-70b-versatile |
+| home-automation  | groq     | llama-3.3-70b-versatile |
 
 ---
 
@@ -857,19 +857,19 @@ shell = ["python *", "cargo *"]     # Allowed shell command patterns (whitelist)
 
 ### Available Tools
 
-| Tool | Description |
-|------|-------------|
-| `file_read` | Read file contents |
-| `file_write` | Write/create files |
-| `file_list` | List directory contents |
-| `shell_exec` | Execute shell commands (restricted by `shell` whitelist) |
-| `memory_store` | Persist key-value data to memory |
-| `memory_recall` | Retrieve data from memory |
-| `web_fetch` | Fetch content from URLs (SSRF-protected) |
-| `agent_send` | Send a message to another agent |
-| `agent_list` | List all running agents |
-| `agent_spawn` | Spawn a new agent |
-| `agent_kill` | Terminate a running agent |
+| Tool            | Description                                              |
+| --------------- | -------------------------------------------------------- |
+| `file_read`     | Read file contents                                       |
+| `file_write`    | Write/create files                                       |
+| `file_list`     | List directory contents                                  |
+| `shell_exec`    | Execute shell commands (restricted by `shell` whitelist) |
+| `memory_store`  | Persist key-value data to memory                         |
+| `memory_recall` | Retrieve data from memory                                |
+| `web_fetch`     | Fetch content from URLs (SSRF-protected)                 |
+| `agent_send`    | Send a message to another agent                          |
+| `agent_list`    | List all running agents                                  |
+| `agent_spawn`   | Spawn a new agent                                        |
+| `agent_kill`    | Terminate a running agent                                |
 
 ### Tips for Custom Agents
 
@@ -920,7 +920,7 @@ POST /api/agents
 
 # Send message
 POST /api/agents/{id}/message
-{"content": "Implement the auth module"}
+{"message": "Implement the auth module"}
 
 # WebSocket (streaming)
 WS /api/agents/{id}/ws
@@ -967,10 +967,10 @@ Orchestrator:
 
 Set the following API keys to enable the corresponding model providers:
 
-| Variable | Provider | Used By |
-|----------|----------|---------|
-| `DEEPSEEK_API_KEY` | DeepSeek | Tier 1 (orchestrator, architect, security-auditor) |
-| `GEMINI_API_KEY` | Google Gemini | Tier 2 primary, Tier 3 fallback |
-| `GROQ_API_KEY` | Groq | Tier 3 primary, Tier 1/2 fallback, Tier 4 |
+| Variable           | Provider      | Used By                                            |
+| ------------------ | ------------- | -------------------------------------------------- |
+| `DEEPSEEK_API_KEY` | DeepSeek      | Tier 1 (orchestrator, architect, security-auditor) |
+| `GEMINI_API_KEY`   | Google Gemini | Tier 2 primary, Tier 3 fallback                    |
+| `GROQ_API_KEY`     | Groq          | Tier 3 primary, Tier 1/2 fallback, Tier 4          |
 
 At minimum, set `GROQ_API_KEY` to enable all Tier 3 and Tier 4 agents. Add `GEMINI_API_KEY` for Tier 2 agents. Add `DEEPSEEK_API_KEY` for Tier 1 frontier agents.

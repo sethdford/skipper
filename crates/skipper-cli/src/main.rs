@@ -324,7 +324,7 @@ enum MigrateSourceArg {
 
 #[derive(Subcommand)]
 enum SkillCommands {
-    /// Install a skill from FangHub or a local directory.
+    /// Install a skill from SkipperHub or a local directory.
     Install {
         /// Skill name, local path, or git URL.
         source: String,
@@ -336,7 +336,7 @@ enum SkillCommands {
         /// Skill name.
         name: String,
     },
-    /// Search FangHub for skills.
+    /// Search SkipperHub for skills.
     Search {
         /// Search query.
         query: String,
@@ -3118,8 +3118,8 @@ fn cmd_skill_install(source: &str) {
             manifest.skill.name, manifest.skill.version
         );
     } else {
-        // Remote install from FangHub
-        println!("Installing {source} from FangHub...");
+        // Remote install from SkipperHub
+        println!("Installing {source} from SkipperHub...");
         let rt = tokio::runtime::Runtime::new().unwrap();
         let client = skipper_skills::marketplace::MarketplaceClient::new(
             skipper_skills::marketplace::MarketplaceConfig::default(),
