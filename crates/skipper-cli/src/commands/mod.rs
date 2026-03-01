@@ -7,6 +7,7 @@ pub mod skill;
 pub mod init;
 pub mod doctor;
 pub mod daemon;
+pub mod workflow;
 
 // Re-export public command functions for use in main.rs
 pub use agent::{cmd_agent_chat, cmd_agent_kill, cmd_agent_list, cmd_agent_new, cmd_agent_spawn};
@@ -16,3 +17,4 @@ pub use skill::{cmd_skill_create, cmd_skill_install, cmd_skill_list, cmd_skill_r
 pub use init::cmd_init;
 pub use doctor::cmd_doctor;
 pub use daemon::{cmd_start, cmd_stop, cmd_status};
+pub use workflow::{cmd_workflow_list, cmd_workflow_create, cmd_workflow_run, cmd_trigger_list, cmd_trigger_create, cmd_trigger_delete};
