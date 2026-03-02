@@ -354,6 +354,87 @@
           </template>
         </div>
 
+        <!-- Shipwright -->
+        <div
+          class="nav-section"
+          x-data="{ collapsed: false }"
+          aria-label="Shipwright"
+        >
+          <div class="nav-section-title" @click="collapsed = !collapsed">
+            <span class="nav-label">Shipwright</span>
+            <span
+              class="nav-section-chevron"
+              :style="collapsed ? '' : 'transform:rotate(90deg)'"
+              >&rsaquo;</span
+            >
+          </div>
+          <template x-if="!collapsed">
+            <div x-transition>
+              <a
+                class="nav-item"
+                :class="{ active: page === 'pipelines' }"
+                @click="navigate('pipelines')"
+                :aria-current="page === 'pipelines' ? 'page' : false"
+              >
+                <span class="nav-icon"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" /></svg
+                ></span>
+                <span class="nav-label">Pipelines</span>
+              </a>
+              <a
+                class="nav-item"
+                :class="{ active: page === 'fleet' }"
+                @click="navigate('fleet')"
+                :aria-current="page === 'fleet' ? 'page' : false"
+              >
+                <span class="nav-icon"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="9" cy="11" r="7" />
+                    <path d="M23 12a7 7 0 0 0-7-7" /></svg
+                ></span>
+                <span class="nav-label">Fleet</span>
+              </a>
+              <a
+                class="nav-item"
+                :class="{ active: page === 'memory' }"
+                @click="navigate('memory')"
+                :aria-current="page === 'memory' ? 'page' : false"
+              >
+                <span class="nav-icon"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                    /></svg
+                ></span>
+                <span class="nav-label">Memory</span>
+              </a>
+            </div>
+          </template>
+        </div>
+
         <!-- Extensions -->
         <div
           class="nav-section"
@@ -11189,6 +11270,328 @@ args = ["-y", "@modelcontextprotocol/server-filesystem", "/path"]</pre
                     </button>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Page: Pipelines -->
+      <template x-if="page === 'pipelines'">
+        <div x-data="pipelinesPage" x-init="loadPipelines()">
+          <div class="page-header">
+            <h2>Pipelines</h2>
+            <div class="flex items-center gap-2">
+              <button
+                class="btn btn-ghost btn-sm"
+                @click="loadPipelines()"
+                title="Refresh"
+                style="padding: 4px 8px"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M21 2v6h-6" />
+                  <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+                  <path d="M3 22v-6h6" />
+                  <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="page-body">
+            <div class="card">
+              <div class="card-header">Active Pipelines</div>
+              <div class="table-wrap" x-show="pipelines.length">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Goal</th>
+                      <th>Issue</th>
+                      <th>Template</th>
+                      <th>Status</th>
+                      <th>Progress</th>
+                      <th>Created</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template x-for="p in pipelines" :key="p.pipeline_id">
+                      <tr>
+                        <td x-text="p.goal.substring(0, 50)"></td>
+                        <td
+                          x-show="p.issue_number"
+                          x-text="'#' + p.issue_number"
+                        ></td>
+                        <td x-show="!p.issue_number" class="text-dim">—</td>
+                        <td>
+                          <span
+                            class="badge badge-muted"
+                            x-text="p.template"
+                          ></span>
+                        </td>
+                        <td>
+                          <span
+                            :class="p.status === 'running' ? 'badge-info' : 'badge-muted'"
+                            class="badge"
+                            x-text="p.status"
+                          ></span>
+                        </td>
+                        <td>
+                          <div
+                            style="display: flex; gap: 8px; align-items: center"
+                          >
+                            <div
+                              style="
+                                flex: 1;
+                                height: 6px;
+                                background: var(--surface3);
+                                border-radius: 3px;
+                                overflow: hidden;
+                              "
+                            >
+                              <div
+                                style="
+                                  height: 100%;
+                                  background: var(--accent);
+                                  width: 100%;
+                                "
+                                :style="'width:' + (p.progress / p.total_stages * 100) + '%'"
+                              ></div>
+                            </div>
+                            <span
+                              class="text-xs text-dim"
+                              x-text="p.progress + ' / ' + p.total_stages"
+                            ></span>
+                          </div>
+                        </td>
+                        <td
+                          class="text-xs text-dim"
+                          x-text="new Date(p.created_at).toLocaleDateString()"
+                        ></td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+              <div
+                class="text-xs text-dim"
+                x-show="!pipelines.length"
+                style="padding: 16px"
+              >
+                No active pipelines
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Page: Fleet -->
+      <template x-if="page === 'fleet'">
+        <div x-data="fleetPage" x-init="loadFleet()">
+          <div class="page-header">
+            <h2>Fleet</h2>
+            <div class="flex items-center gap-2">
+              <button
+                class="btn btn-ghost btn-sm"
+                @click="loadFleet()"
+                title="Refresh"
+                style="padding: 4px 8px"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M21 2v6h-6" />
+                  <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+                  <path d="M3 22v-6h6" />
+                  <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="page-body">
+            <div class="stats-row">
+              <div class="stat-card">
+                <div
+                  class="stat-value"
+                  x-text="fleetStatus.active_pipelines"
+                ></div>
+                <div class="stat-label">Active Pipelines</div>
+              </div>
+              <div class="stat-card">
+                <div
+                  class="stat-value"
+                  x-text="fleetStatus.completed_pipelines"
+                ></div>
+                <div class="stat-label">Completed</div>
+              </div>
+              <div class="stat-card">
+                <div
+                  class="stat-value"
+                  x-text="fleetStatus.failed_pipelines"
+                ></div>
+                <div class="stat-label">Failed</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">
+                  <span style="font-size: 14px">$</span
+                  ><span x-text="fleetStatus.total_cost_usd.toFixed(2)"></span>
+                </div>
+                <div class="stat-label">Total Cost</div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top: 16px">
+              <div class="card-header">Worker Pool Utilization</div>
+              <div style="padding: 16px">
+                <div
+                  style="
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                    margin-bottom: 8px;
+                  "
+                >
+                  <div
+                    style="
+                      flex: 1;
+                      height: 12px;
+                      background: var(--surface3);
+                      border-radius: 6px;
+                      overflow: hidden;
+                    "
+                  >
+                    <div
+                      style="height: 100%; background: var(--accent)"
+                      :style="'width:' + (fleetDetail.worker_pool_utilization * 100) + '%'"
+                    ></div>
+                  </div>
+                  <span
+                    class="text-xs text-dim"
+                    x-text="Math.round(fleetDetail.worker_pool_utilization * 100) + '%'"
+                  ></span>
+                </div>
+              </div>
+
+              <div class="card-header" style="margin-top: 12px">Repos</div>
+              <div class="table-wrap" x-show="fleetDetail.repos.length">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Repository</th>
+                      <th>Workers</th>
+                      <th>Queue Depth</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template
+                      x-for="repo in fleetDetail.repos"
+                      :key="repo.repo_path"
+                    >
+                      <tr>
+                        <td x-text="repo.repo_path"></td>
+                        <td x-text="repo.worker_count"></td>
+                        <td x-text="repo.queue_depth"></td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+              <div
+                class="text-xs text-dim"
+                x-show="!fleetDetail.repos.length"
+                style="padding: 16px"
+              >
+                No connected repos
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Page: Memory -->
+      <template x-if="page === 'memory'">
+        <div x-data="memoryPage" x-init="loadMemory()">
+          <div class="page-header">
+            <h2>Shipwright Memory</h2>
+            <div class="flex items-center gap-2">
+              <button
+                class="btn btn-ghost btn-sm"
+                @click="loadMemory()"
+                title="Refresh"
+                style="padding: 4px 8px"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M21 2v6h-6" />
+                  <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+                  <path d="M3 22v-6h6" />
+                  <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="page-body">
+            <div class="card">
+              <div class="card-header">Learned Patterns</div>
+              <div class="table-wrap" x-show="memory.entries.length">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Pattern</th>
+                      <th>Occurrences</th>
+                      <th>Last Seen</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template x-for="entry in memory.entries" :key="entry.id">
+                      <tr>
+                        <td>
+                          <span
+                            class="badge badge-muted"
+                            x-text="entry.pattern_type"
+                          ></span>
+                        </td>
+                        <td x-text="entry.description.substring(0, 60)"></td>
+                        <td x-text="entry.occurrence_count"></td>
+                        <td
+                          class="text-xs text-dim"
+                          x-text="new Date(entry.last_seen).toLocaleDateString()"
+                        ></td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+              <div
+                class="text-xs text-dim"
+                x-show="!memory.entries.length"
+                style="padding: 16px"
+              >
+                No learned patterns yet. Patterns appear after pipeline runs and
+                failures.
               </div>
             </div>
           </div>

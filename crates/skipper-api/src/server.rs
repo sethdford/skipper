@@ -639,7 +639,10 @@ pub async fn build_router(
             "/api/pipelines/:id/advance",
             axum::routing::post(routes::advance_pipeline),
         )
+        .route("/api/pipelines", axum::routing::get(routes::list_pipelines))
         .route("/api/fleet/status", axum::routing::get(routes::get_fleet_status))
+        .route("/api/fleet/detail", axum::routing::get(routes::get_fleet_detail))
+        .route("/api/memory", axum::routing::get(routes::get_memory))
         .route(
             "/mcp",
             axum::routing::post(routes::mcp_handler),
