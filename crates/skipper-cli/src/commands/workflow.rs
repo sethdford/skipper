@@ -1,6 +1,6 @@
 //! Workflow and trigger commands: automation orchestration.
 
-use crate::{daemon_client, daemon_json, require_daemon, ui};
+use crate::{daemon_client, daemon_json, require_daemon};
 use std::path::PathBuf;
 
 /// List all workflows.

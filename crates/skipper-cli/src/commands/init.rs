@@ -2,8 +2,9 @@
 
 use crate::{
     find_daemon, open_in_browser, restrict_dir_permissions, restrict_file_permissions,
-    cmd_quick_chat, ui, bundled_agents, tui,
+    ui, bundled_agents, tui,
 };
+use crate::commands::cmd_quick_chat;
 
 /// Initialize Skipper configuration and data directories.
 pub fn cmd_init(quick: bool) {

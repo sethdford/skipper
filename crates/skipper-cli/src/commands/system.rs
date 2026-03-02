@@ -20,11 +20,7 @@ pub fn cmd_system_info(json: bool) {
             "skipper_home": skipper_home().display().to_string(),
             "daemon_running": false,
         });
-        if json {
-            println!("{}", serde_json::to_string_pretty(&system_info).unwrap_or_default());
-        } else {
-            println!("{}", serde_json::to_string_pretty(&system_info).unwrap_or_default());
-        }
+        println!("{}", serde_json::to_string_pretty(&system_info).unwrap_or_default());
     }
 }
 
@@ -218,19 +214,15 @@ pub fn cmd_health(json: bool) {
         let body = daemon_json(client.get(format!("{base}/api/health")).send());
         if json {
             println!("{}", serde_json::to_string_pretty(&body).unwrap_or_default());
+        } else if let Some(status) = body.get("status").and_then(|v| v.as_str()) {
+            println!("Daemon: {status}");
         } else {
-            if let Some(status) = body.get("status").and_then(|v| v.as_str()) {
-                println!("Daemon: {status}");
-            } else {
-                println!("Daemon: running");
-            }
+            println!("Daemon: running");
         }
+    } else if json {
+        println!("{{\"status\": \"offline\"}}");
     } else {
-        if json {
-            println!("{{\"status\": \"offline\"}}");
-        } else {
-            println!("Daemon: offline");
-        }
+        println!("Daemon: offline");
     }
 }
 

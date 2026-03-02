@@ -227,18 +227,6 @@ pub fn cmd_status(config: Option<PathBuf>, json: bool) {
     }
 }
 
-/// Require a running daemon — exit with helpful message if not found.
-pub fn require_daemon(command: &str) -> String {
-    find_daemon().unwrap_or_else(|| {
-        ui::error_with_fix(
-            &format!("`skipper {command}` requires a running daemon"),
-            "Start the daemon: skipper start",
-        );
-        ui::hint("Or try `skipper chat` which works without a daemon");
-        std::process::exit(1);
-    })
-}
-
 /// Boot kernel in single-shot mode (without running daemon).
 pub fn boot_kernel(config: Option<PathBuf>) -> SkipperKernel {
     match SkipperKernel::boot(config.as_deref()) {
